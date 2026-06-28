@@ -49,8 +49,20 @@ model Community {
   owner       User         @relation("CommunityOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   memberships Membership[]
   rooms       Room[]
+  invites     Invite[]
 
   @@index([ownerId])
+}
+
+model Invite {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  communityId String
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime?
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@index([communityId])
 }
 
 model Membership {

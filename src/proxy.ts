@@ -4,13 +4,20 @@ const isProtectedRoute = createRouteMatcher([
   "/workspace(.*)",
   "/api/messages(.*)",
   "/api/communities(.*)",
+  "/join(.*)",
 ])
 
-export default clerkMiddleware(async (auth, request) => {
+const clerkProxy = clerkMiddleware(async (auth, request) => {
   if (isProtectedRoute(request)) {
     await auth.protect()
   }
 })
+
+export function proxy(
+  ...args: Parameters<typeof clerkProxy>
+): ReturnType<typeof clerkProxy> {
+  return clerkProxy(...args)
+}
 
 export const config = {
   matcher: [
