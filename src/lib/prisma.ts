@@ -8,7 +8,8 @@ const globalForPrisma = globalThis as typeof globalThis & {
 
 function parseConnectionString(url: string) {
   try {
-    const parsed = new URL(url)
+    const cleanedUrl = url.trim().replace(/^['"]|['"]$/g, "")
+    const parsed = new URL(cleanedUrl)
     return {
       host: parsed.hostname,
       port: parsed.port ? parseInt(parsed.port, 10) : 3306,
