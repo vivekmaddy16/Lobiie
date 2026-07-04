@@ -1,6 +1,6 @@
-# Lobiie
+# Lobii
 
-Lobiie is a real-time community workspace MVP built with Next.js 16, Clerk, Socket.IO, Zustand, Prisma, SQLite, WebRTC, and Tailwind CSS.
+Lobii is a real-time community workspace MVP built with Next.js 16, Clerk, Socket.IO, Zustand, Prisma, SQLite, WebRTC, and Tailwind CSS.
 
 ## What is working
 
