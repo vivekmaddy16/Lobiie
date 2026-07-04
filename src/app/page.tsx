@@ -5,7 +5,7 @@ import {
   MessageSquareIcon,
   MicIcon,
   VideoIcon,
-  SparklesIcon,
+  ZapIcon,
   PinIcon,
   CheckCheckIcon,
   SearchIcon,
@@ -65,7 +65,7 @@ export default async function Home() {
           {/* Left Column: Minimal Clean Copy */}
           <div className="space-y-6">
             <Badge variant="outline" className="rounded-full px-3 py-1 border-blue-500/20 bg-blue-500/5 text-blue-600 dark:text-blue-400">
-              <SparklesIcon className="size-3.5 mr-1.5 text-blue-500" />
+              <ZapIcon className="size-3.5 mr-1.5 text-blue-500 fill-blue-500/10" />
               Real-time Team Hub
             </Badge>
             <h1 className="font-heading text-5xl leading-[1.05] tracking-tight text-foreground sm:text-6xl lg:text-7xl">
