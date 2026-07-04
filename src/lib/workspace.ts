@@ -12,25 +12,11 @@ const starterCommunity = {
   accent: "amber",
   rooms: [
     {
-      name: "pulse-check",
-      slug: "pulse-check",
+      name: "general",
+      slug: "general",
       kind: "CHAT" as const,
-      topic: "Daily async standups and launch updates",
+      topic: "Welcome! Start the conversation here.",
       sortOrder: 0,
-    },
-    {
-      name: "war-room",
-      slug: "war-room",
-      kind: "VOICE" as const,
-      topic: "Quick huddles, pair debugging, and fast decisions",
-      sortOrder: 1,
-    },
-    {
-      name: "demo-stage",
-      slug: "demo-stage",
-      kind: "VIDEO" as const,
-      topic: "Show product demos, feedback loops, and launch rehearsals",
-      sortOrder: 2,
     },
   ],
 }
@@ -80,29 +66,6 @@ export async function ensureViewerRecord() {
 }
 
 async function ensureStarterCommunity(viewerId: string) {
-  // Ensure mock users exist for UI rendering
-  const harry = await db.user.upsert({
-    where: { externalId: "mock_harry" },
-    update: {},
-    create: {
-      externalId: "mock_harry",
-      email: "harry@united.dev",
-      name: "Harry Maguire",
-      imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&h=120&fit=crop&crop=face",
-    },
-  })
-
-  const bruno = await db.user.upsert({
-    where: { externalId: "mock_bruno" },
-    update: {},
-    create: {
-      externalId: "mock_bruno",
-      email: "bruno@united.dev",
-      name: "Bruno Fernandes",
-      imageUrl: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&h=120&fit=crop&crop=face",
-    },
-  })
-
   let community = await db.community.findUnique({
     where: { slug: starterCommunity.slug },
     include: {
@@ -123,8 +86,6 @@ async function ensureStarterCommunity(viewerId: string) {
         memberships: {
           create: [
             { userId: viewerId, role: "OWNER" },
-            { userId: harry.id, role: "MEMBER" },
-            { userId: bruno.id, role: "MEMBER" },
           ],
         },
         rooms: {
@@ -138,7 +99,7 @@ async function ensureStarterCommunity(viewerId: string) {
       },
     })
   } else {
-    // Ensure memberships for all 3 users exist
+    // Ensure membership for the viewer exists
     await db.membership.upsert({
       where: {
         userId_communityId: {
@@ -153,74 +114,18 @@ async function ensureStarterCommunity(viewerId: string) {
         role: community.ownerId === viewerId ? "OWNER" : "MEMBER",
       },
     })
-    await db.membership.upsert({
-      where: {
-        userId_communityId: {
-          userId: harry.id,
+
+    // Ensure general room exists
+    const generalRoom = community.rooms.find((room) => room.slug === "general")
+    if (!generalRoom) {
+      await db.room.create({
+        data: {
           communityId: community.id,
-        },
-      },
-      update: {},
-      create: {
-        userId: harry.id,
-        communityId: community.id,
-        role: "MEMBER",
-      },
-    })
-    await db.membership.upsert({
-      where: {
-        userId_communityId: {
-          userId: bruno.id,
-          communityId: community.id,
-        },
-      },
-      update: {},
-      create: {
-        userId: bruno.id,
-        communityId: community.id,
-        role: "MEMBER",
-      },
-    })
-  }
-
-  // Ensure default message threads exist in the pulse-check room to replicate the exact UI
-  const pulseCheckRoom = community.rooms.find((room) => room.slug === "pulse-check")
-  if (pulseCheckRoom) {
-    const existingMessagesCount = await db.message.count({
-      where: { roomId: pulseCheckRoom.id },
-    })
-
-    if (existingMessagesCount <= 1) {
-      // Clear placeholder messages
-      await db.message.deleteMany({
-        where: { roomId: pulseCheckRoom.id },
-      })
-
-      // Create conversation matching screenshot
-      await db.message.create({
-        data: {
-          roomId: pulseCheckRoom.id,
-          authorId: harry.id,
-          content: "Hey lads, tough game yesterday. Let's talk about what went wrong and how we can improve 😐.",
-          createdAt: new Date(Date.now() - 3600000 * 2), // 2 hours ago
-        },
-      })
-
-      await db.message.create({
-        data: {
-          roomId: pulseCheckRoom.id,
-          authorId: bruno.id,
-          content: "Agreed, Harry 👍. We had some good moments, but we need to be more clinical in front of the goal 😢.",
-          createdAt: new Date(Date.now() - 3600000 * 1), // 1 hour ago
-        },
-      })
-
-      await db.message.create({
-        data: {
-          roomId: pulseCheckRoom.id,
-          authorId: viewerId,
-          content: "We need to control the midfield and exploit their defensive weaknesses. Bruno and Paul, I'm counting on your creativity. Marcus and Jadon, stretch their defense wide. Use your pace and take on their full-backs.",
-          createdAt: new Date(), // Now
+          name: "general",
+          slug: "general",
+          kind: "CHAT",
+          topic: "Welcome! Start the conversation here.",
+          sortOrder: 0,
         },
       })
     }

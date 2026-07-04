@@ -30,7 +30,11 @@ import {
   GlobeIcon,
   LogOutIcon,
   XIcon,
-  FileIcon
+  FileIcon,
+  InfoIcon,
+  LinkIcon,
+  BellOffIcon,
+  LoaderCircleIcon
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -50,6 +54,13 @@ import { CreateRoomDialog } from "@/components/workspace/create-room-dialog"
 import { CreateCommunityDialog } from "@/components/workspace/create-community-dialog"
 import { InviteDialog } from "@/components/workspace/invite-dialog"
 import { ThemeToggle } from "@/components/workspace/theme-toggle"
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
 import { useLobbySocket } from "@/hooks/use-lobby-socket"
 import { useRoomStore } from "@/hooks/use-room-store"
 import { getSocket } from "@/lib/socket-client"
@@ -162,6 +173,27 @@ export function WorkspaceShell({
 
   const removeAttachment = () => {
     setAttachedFile(null)
+  }
+
+  const [isGeneratingInvite, setIsGeneratingInvite] = useState(false)
+
+  const handleCopyInvite = async () => {
+    setIsGeneratingInvite(true)
+    try {
+      const response = await fetch(`/api/communities/${currentCommunity.id}/invite`, {
+        method: "POST",
+      })
+      const payload = await response.json()
+      if (!response.ok) throw new Error(payload.error ?? "Unable to create invite.")
+      const baseUrl = typeof window !== "undefined" ? window.location.origin : ""
+      const inviteUrl = `${baseUrl}/join/${payload.invite.code}`
+      await navigator.clipboard.writeText(inviteUrl)
+      toast.success("Invite link copied to clipboard!")
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to copy invite link.")
+    } finally {
+      setIsGeneratingInvite(false)
+    }
   }
 
   const [isTypingLocal, setIsTypingLocal] = useState(false)
@@ -774,12 +806,57 @@ export function WorkspaceShell({
                     >
                       <VideoIcon className="size-5" />
                     </button>
-                    <button
-                      type="button"
-                      className="p-2.5 rounded-full text-zinc-400 hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
-                    >
-                      <MoreVerticalIcon className="size-5" />
-                    </button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          className="p-2.5 rounded-full text-zinc-400 hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer"
+                          title="Options"
+                        >
+                          <MoreVerticalIcon className="size-5" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-lg p-1">
+                        <DropdownMenuItem
+                          onClick={() => {
+                            toast.info(
+                              <div className="space-y-1">
+                                <p className="font-semibold text-sm">Room Info</p>
+                                <p className="text-xs">Name: #{activeRoom.name}</p>
+                                <p className="text-xs">Type: {activeRoom.kind}</p>
+                                {activeRoom.topic && <p className="text-xs">Topic: {activeRoom.topic}</p>}
+                              </div>
+                            )
+                          }}
+                          className="flex items-center gap-2 px-2.5 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg cursor-pointer"
+                        >
+                          <InfoIcon className="size-4 text-muted-foreground" />
+                          <span>Room Info</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={handleCopyInvite}
+                          disabled={isGeneratingInvite}
+                          className="flex items-center gap-2 px-2.5 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg cursor-pointer"
+                        >
+                          {isGeneratingInvite ? (
+                            <LoaderCircleIcon className="size-4 animate-spin" />
+                          ) : (
+                            <LinkIcon className="size-4 text-muted-foreground" />
+                          )}
+                          <span>Copy Invite Link</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator className="my-1 border-t border-zinc-100 dark:border-zinc-800" />
+                        <DropdownMenuItem
+                          onClick={() => {
+                            toast.success("Notification settings updated (Muted).")
+                          }}
+                          className="flex items-center gap-2 px-2.5 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg cursor-pointer"
+                        >
+                          <BellOffIcon className="size-4 text-muted-foreground" />
+                          <span>Mute Notifications</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
 
                   <div className="h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-1" />
