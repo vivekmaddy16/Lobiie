@@ -43,7 +43,6 @@ export default async function Home() {
             <Link href="/" className="font-heading text-2xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600 bg-clip-text text-transparent hover:opacity-90 transition">
               Lobiie
             </Link>
-            <span className="size-1.5 rounded-full bg-blue-500 dark:bg-blue-400 animate-pulse mt-1" />
           </div>
           <div className="flex items-center gap-3">
             <ThemeToggle />
