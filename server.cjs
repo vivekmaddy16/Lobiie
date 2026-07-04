@@ -172,7 +172,7 @@ app.prepare().then(() => {
       console.error(error)
       process.exit(1)
     })
-    .listen(port, hostname, () => {
-      console.log(`> Ready on http://${hostname}:${port}`)
+    .listen(port, "0.0.0.0", () => {
+      console.log(`> Ready on http://0.0.0.0:${port}`)
     })
 })
