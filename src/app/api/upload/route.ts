@@ -2,7 +2,6 @@ import { auth } from "@clerk/nextjs/server"
 import { NextResponse } from "next/server"
 import { writeFile, mkdir } from "fs/promises"
 import { join } from "path"
-import { ensureViewerRecord } from "@/lib/workspace"
 
 export async function POST(request: Request) {
   const session = await auth()
@@ -12,9 +11,6 @@ export async function POST(request: Request) {
   }
 
   try {
-    // Ensure user is registered in db
-    await ensureViewerRecord()
-
     const data = await request.formData()
     const file: File | null = data.get("file") as unknown as File
 
