@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { UserButton } from "@clerk/nextjs"
+import { SignOutButton, UserButton } from "@clerk/nextjs"
 import {
   startTransition,
   useDeferredValue,
@@ -27,7 +27,8 @@ import {
   CheckCheckIcon,
   CheckIcon,
   ChevronRightIcon,
-  GlobeIcon
+  GlobeIcon,
+  LogOutIcon
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -242,7 +243,7 @@ export function WorkspaceShell({
               </div>
               <div className="flex items-center gap-2">
                 <SearchIcon className="size-4.5 text-muted-foreground cursor-pointer hover:text-foreground transition" />
-                <div className="rounded-full border bg-background p-1.5 dark:border-white/10 dark:bg-zinc-800/80">
+                <div className="rounded-full border bg-background p-1.5 dark:border-white/10 dark:bg-zinc-800/80 flex items-center justify-center">
                   <UserButton
                     appearance={{
                       elements: {
@@ -250,6 +251,13 @@ export function WorkspaceShell({
                       },
                     }}
                   />
+                </div>
+                <div className="rounded-full border bg-background p-1.5 dark:border-white/10 dark:bg-zinc-800/80 flex items-center justify-center hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition cursor-pointer">
+                  <SignOutButton redirectUrl="/">
+                    <button type="button" className="flex items-center justify-center text-zinc-500 hover:text-rose-500 transition" title="Log Out">
+                      <LogOutIcon className="size-4" />
+                    </button>
+                  </SignOutButton>
                 </div>
               </div>
             </div>
