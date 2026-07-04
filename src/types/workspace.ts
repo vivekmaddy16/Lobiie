@@ -13,6 +13,9 @@ export type WorkspaceMessage = {
   id: string
   roomId: string
   content: string
+  fileUrl?: string | null
+  fileType?: string | null
+  fileName?: string | null
   createdAt: string
   author: {
     id: string

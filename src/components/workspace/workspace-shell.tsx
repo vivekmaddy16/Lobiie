@@ -28,7 +28,9 @@ import {
   CheckIcon,
   ChevronRightIcon,
   GlobeIcon,
-  LogOutIcon
+  LogOutIcon,
+  XIcon,
+  FileIcon
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -114,6 +116,54 @@ export function WorkspaceShell({
   const [sendingMessage, setSendingMessage] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
 
+  const [attachedFile, setAttachedFile] = useState<{
+    fileUrl: string
+    fileType: string
+    fileName: string
+  } | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    const formData = new FormData()
+    formData.append("file", file)
+
+    try {
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to upload file")
+      }
+
+      const data = await response.json()
+      setAttachedFile({
+        fileUrl: data.fileUrl,
+        fileType: data.fileType,
+        fileName: data.fileName,
+      })
+      toast.success("File attached successfully!")
+    } catch (err) {
+      console.error(err)
+      toast.error("Failed to upload file.")
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
+    }
+  }
+
+  const removeAttachment = () => {
+    setAttachedFile(null)
+  }
+
   const [isTypingLocal, setIsTypingLocal] = useState(false)
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -129,7 +179,9 @@ export function WorkspaceShell({
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current)
     }
-    setIsTypingLocal(false)
+    Promise.resolve().then(() => {
+      setIsTypingLocal(false)
+    })
   }, [activeRoomId])
 
   useEffect(() => {
@@ -201,16 +253,20 @@ export function WorkspaceShell({
   async function handleSendMessage(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    if (!activeRoom || !messageContent.trim()) {
+    if (!activeRoom || (!messageContent.trim() && !attachedFile)) {
       return
     }
 
     const contentToSend = messageContent
+    const fileToSend = attachedFile
     const tempId = `temp-${Date.now()}`
 
     const tempMessage = {
       id: tempId,
       content: contentToSend,
+      fileUrl: fileToSend?.fileUrl ?? null,
+      fileType: fileToSend?.fileType ?? null,
+      fileName: fileToSend?.fileName ?? null,
       createdAt: new Date().toISOString(),
       roomId: activeRoom.id,
       author: {
@@ -235,8 +291,9 @@ export function WorkspaceShell({
       userName: viewer.name,
     })
 
-    // 3. Clear text input instantly (snappy UI!)
+    // 3. Clear text input and file attachment instantly
     setMessageContent("")
+    setAttachedFile(null)
 
     // 4. Send background fetch to save message
     fetch("/api/messages", {
@@ -247,6 +304,9 @@ export function WorkspaceShell({
       body: JSON.stringify({
         roomId: activeRoom.id,
         content: contentToSend,
+        fileUrl: fileToSend?.fileUrl ?? null,
+        fileType: fileToSend?.fileType ?? null,
+        fileName: fileToSend?.fileName ?? null,
       }),
     })
       .then(async (response) => {
@@ -276,7 +336,7 @@ export function WorkspaceShell({
         })
       })
       .catch((error) => {
-        // 7. On error, remove optimistic message from feed and restore text
+        // 7. On error, remove optimistic message from feed and restore text/attachment
         useRoomStore.setState((state) => {
           const roomMessages = state.messagesByRoom[activeRoom.id] ?? []
           const updatedMessages = roomMessages.filter((msg) => msg.id !== tempId)
@@ -288,6 +348,7 @@ export function WorkspaceShell({
           }
         })
         setMessageContent(contentToSend)
+        setAttachedFile(fileToSend)
         toast.error("Message failed to send. Draft restored.")
       })
   }
@@ -302,12 +363,7 @@ export function WorkspaceShell({
     }
   }
 
-  function handleAttachTactics() {
-    setMessageContent(
-      "We need to control the midfield and exploit their defensive weaknesses. Bruno and Paul, I'm counting on your creativity. Marcus and Jadon, stretch their defense wide. Use your pace and take on their full-backs."
-    )
-    toast.success("Tactical details auto-attached to text area! Press Send to share.")
-  }
+
 
   // Filter lists based on search query
   const filteredRooms = currentCommunity.rooms.filter((room) =>
@@ -797,7 +853,58 @@ export function WorkspaceShell({
                                     : "bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 border border-zinc-100 dark:border-zinc-800/80 rounded-tl-none"
                                 )}
                               >
-                                <p>{message.content}</p>
+                                {message.content && <p>{message.content}</p>}
+
+                                {message.fileUrl && (
+                                  <div className="mt-2">
+                                    {message.fileType?.startsWith("image/") ? (
+                                      <div className="relative group overflow-hidden rounded-xl border border-zinc-200/20 dark:border-zinc-700/20 shadow-md max-w-sm">
+                                        <img
+                                          src={message.fileUrl}
+                                          alt={message.fileName ?? "Shared Image"}
+                                          className="max-h-[260px] w-auto object-contain scale-100 hover:scale-[1.01] transition duration-200 cursor-pointer"
+                                          onClick={() => window.open(message.fileUrl || '', '_blank')}
+                                        />
+                                      </div>
+                                    ) : message.fileType?.startsWith("video/") ? (
+                                      <div className="rounded-xl overflow-hidden border border-zinc-200/20 dark:border-zinc-700/20 shadow-md max-w-md">
+                                        <video
+                                          src={message.fileUrl}
+                                          controls
+                                          className="w-full max-h-[260px]"
+                                        />
+                                      </div>
+                                    ) : message.fileType?.startsWith("audio/") ? (
+                                      <div className="min-w-[240px] py-1">
+                                        <audio
+                                          src={message.fileUrl}
+                                          controls
+                                          className="w-full h-8"
+                                        />
+                                      </div>
+                                    ) : (
+                                      <a
+                                        href={message.fileUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className={cn(
+                                          "flex items-center gap-3 p-2.5 rounded-xl border text-xs font-medium transition max-w-sm",
+                                          isViewer
+                                            ? "bg-blue-700 hover:bg-blue-800 text-white border-blue-500/20"
+                                            : "bg-zinc-50/50 dark:bg-zinc-900/40 hover:bg-zinc-100/50 dark:hover:bg-zinc-900/60 border-zinc-200/50 dark:border-zinc-800/50 text-zinc-800 dark:text-zinc-200"
+                                        )}
+                                      >
+                                        <div className="rounded-lg p-2 bg-background border flex items-center justify-center text-zinc-500 dark:text-zinc-400 shrink-0">
+                                          <FileIcon className="size-4" />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                          <p className="truncate font-semibold leading-normal">{message.fileName ?? "Shared File"}</p>
+                                          <p className="text-[10px] text-muted-foreground truncate opacity-80 leading-none mt-0.5">Click to download</p>
+                                        </div>
+                                      </a>
+                                    )}
+                                  </div>
+                                )}
 
                                 {hasTactics && (
                                   <div className="mt-3.5 grid grid-cols-2 gap-2 max-w-sm">
@@ -830,6 +937,43 @@ export function WorkspaceShell({
                   <div className="p-4 border-t border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900">
                     <form className="space-y-3" onSubmit={handleSendMessage}>
                       <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-2 focus-within:border-primary/50 transition">
+                        {/* File Attachment Preview */}
+                        {attachedFile && (
+                          <div className="mb-2 p-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-3 max-w-sm shadow-xs">
+                            <div className="flex items-center gap-2 min-w-0">
+                              {attachedFile.fileType.startsWith("image/") ? (
+                                <img
+                                  src={attachedFile.fileUrl}
+                                  alt="Preview"
+                                  className="size-10 object-cover rounded-lg border border-zinc-200 dark:border-zinc-800"
+                                />
+                              ) : (
+                                <div className="size-10 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center text-zinc-500 shrink-0">
+                                  <FileIcon className="size-5" />
+                                </div>
+                              )}
+                              <div className="min-w-0 flex-1 text-xs">
+                                <p className="truncate font-semibold text-zinc-800 dark:text-zinc-200 leading-normal">{attachedFile.fileName}</p>
+                                <p className="text-[10px] text-muted-foreground truncate leading-none opacity-85 mt-0.5">{attachedFile.fileType}</p>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={removeAttachment}
+                              className="p-1 rounded-full text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+                            >
+                              <XIcon className="size-4" />
+                            </button>
+                          </div>
+                        )}
+
+                        {uploading && (
+                          <div className="mb-2 p-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center gap-2 text-xs text-muted-foreground max-w-sm animate-pulse shadow-xs">
+                            <span className="h-2 w-2 rounded-full bg-blue-500 animate-ping" />
+                            <span>Uploading file...</span>
+                          </div>
+                        )}
+
                         <Textarea
                           placeholder={`Message #${activeRoom.slug}`}
                           value={messageContent}
@@ -839,14 +983,23 @@ export function WorkspaceShell({
                         />
                         <div className="flex items-center justify-between gap-3 px-2 pt-2 border-t border-zinc-200/50 dark:border-zinc-800/50 mt-1">
                           <div className="flex items-center gap-1.5">
+                            {/* Hidden File Input */}
+                            <input
+                              type="file"
+                              ref={fileInputRef}
+                              onChange={handleFileChange}
+                              className="hidden"
+                            />
                             <button
                               type="button"
-                              onClick={handleAttachTactics}
-                              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-zinc-200/50 dark:hover:bg-zinc-800 transition"
-                              title="Attach Football Tactics Diagram"
+                              onClick={() => fileInputRef.current?.click()}
+                              disabled={uploading}
+                              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-zinc-200/50 dark:hover:bg-zinc-800 transition disabled:opacity-55"
+                              title="Upload file or media"
                             >
                               <PaperclipIcon className="size-4.5" />
                             </button>
+
                             <span className="text-[10px] text-muted-foreground">
                               Press Enter to send · Shift+Enter for newline
                             </span>
@@ -854,7 +1007,7 @@ export function WorkspaceShell({
                           <Button
                             type="submit"
                             size="sm"
-                            disabled={sendingMessage || !messageContent.trim()}
+                            disabled={sendingMessage || uploading || (!messageContent.trim() && !attachedFile)}
                             className="rounded-xl px-4 py-1.5 h-8 gap-1.5 shrink-0"
                           >
                             <span>Send</span>

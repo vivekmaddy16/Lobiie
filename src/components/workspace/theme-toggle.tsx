@@ -11,11 +11,13 @@ export function ThemeToggle() {
 
   useEffect(() => {
     const stored = localStorage.getItem("lobiie-theme") as "dark" | "light" | "system" | null
-    if (stored) {
-      setTheme(stored)
-    } else {
-      setTheme("dark") // Default to dark mode
-    }
+    Promise.resolve().then(() => {
+      if (stored) {
+        setTheme(stored)
+      } else {
+        setTheme("dark") // Default to dark mode
+      }
+    })
   }, [])
 
   useEffect(() => {

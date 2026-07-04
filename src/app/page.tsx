@@ -179,7 +179,7 @@ export default async function Home() {
                     <div className="flex gap-1.5 max-w-[85%]">
                       <span className="size-5 rounded-full bg-zinc-300 dark:bg-zinc-800 shrink-0 flex items-center justify-center font-bold text-[7px]">HM</span>
                       <div className="bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 p-2 rounded-xl rounded-tl-none text-[8px] leading-relaxed">
-                        Hey lads, tough game yesterday. Let's talk about what went wrong...
+                        Hey lads, tough game yesterday. Let&apos;s talk about what went wrong...
                       </div>
                     </div>
 

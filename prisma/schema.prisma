@@ -100,6 +100,9 @@ model Room {
 model Message {
   id        String   @id @default(cuid())
   content   String
+  fileUrl   String?
+  fileType  String?
+  fileName  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   roomId    String

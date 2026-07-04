@@ -253,6 +253,9 @@ function serializeCommunity(
       messages: Array<{
         id: string
         content: string
+        fileUrl?: string | null
+        fileType?: string | null
+        fileName?: string | null
         createdAt: Date
         author: {
           id: string
@@ -288,6 +291,9 @@ function serializeCommunity(
         id: message.id,
         roomId: room.id,
         content: message.content,
+        fileUrl: message.fileUrl,
+        fileType: message.fileType,
+        fileName: message.fileName,
         createdAt: message.createdAt.toISOString(),
         author: {
           id: message.author.id,

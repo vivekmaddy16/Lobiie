@@ -7,7 +7,13 @@ import { ensureViewerRecord } from "@/lib/workspace"
 
 const messageSchema = z.object({
   roomId: z.string().min(1),
-  content: z.string().trim().min(1).max(2000),
+  content: z.string().trim().max(2000).optional().default(""),
+  fileUrl: z.string().nullable().optional(),
+  fileType: z.string().nullable().optional(),
+  fileName: z.string().nullable().optional(),
+}).refine(data => data.content.trim().length > 0 || !!data.fileUrl, {
+  message: "Either message content or file attachment is required.",
+  path: ["content"]
 })
 
 export async function POST(request: Request) {
@@ -23,7 +29,7 @@ export async function POST(request: Request) {
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Message payload is invalid." },
+        { error: parsed.error.issues[0]?.message ?? "Message payload is invalid." },
         { status: 400 }
       )
     }
@@ -60,6 +66,9 @@ export async function POST(request: Request) {
         roomId: parsed.data.roomId,
         authorId: viewer.id,
         content: parsed.data.content,
+        fileUrl: parsed.data.fileUrl,
+        fileType: parsed.data.fileType,
+        fileName: parsed.data.fileName,
       },
       include: {
         author: {
@@ -77,11 +86,15 @@ export async function POST(request: Request) {
         id: message.id,
         roomId: parsed.data.roomId,
         content: message.content,
+        fileUrl: message.fileUrl,
+        fileType: message.fileType,
+        fileName: message.fileName,
         createdAt: message.createdAt.toISOString(),
         author: message.author,
       },
     })
-  } catch {
+  } catch (error) {
+    console.error("Error creating message in database:", error)
     return NextResponse.json(
       { error: "Unable to create message." },
       { status: 500 }
