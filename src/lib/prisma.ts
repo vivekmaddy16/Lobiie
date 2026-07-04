@@ -1,4 +1,5 @@
 import { PrismaClient } from "@/generated/prisma"
+
 import { PrismaMariaDb } from "@prisma/adapter-mariadb"
 
 const globalForPrisma = globalThis as typeof globalThis & {
@@ -34,7 +35,7 @@ function createPrismaClient() {
     user: config.user || "root",
     password: config.password,
     database: config.database,
-    connectionLimit: 10,
+    connectionLimit: 2,
   })
 
   return new PrismaClient({ adapter })
