@@ -38,9 +38,25 @@ export default function RootLayout({
       <html
         lang="en"
         data-scroll-behavior="smooth"
-        className={`${sans.variable} ${heading.variable} ${mono.variable} h-full antialiased`}
+        className={`dark ${sans.variable} ${heading.variable} ${mono.variable} h-full antialiased`}
       >
-        <body className="min-h-full">
+        <head>
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                try {
+                  var theme = localStorage.getItem('lobiie-theme');
+                  if (theme === 'light' || (theme === 'system' && !window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    document.documentElement.classList.remove('dark');
+                  } else {
+                    document.documentElement.classList.add('dark');
+                  }
+                } catch (e) {}
+              `
+            }}
+          />
+        </head>
+        <body className="min-h-full bg-[#F3F4F6] text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50 transition-colors duration-150">
           <TooltipProvider>
             <div className="relative flex min-h-screen flex-col">{children}</div>
             <Toaster richColors position="top-right" />

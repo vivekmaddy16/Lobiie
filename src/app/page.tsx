@@ -15,6 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { ThemeToggle } from "@/components/workspace/theme-toggle"
 
 const stack = [
   "Next.js 16",
@@ -42,6 +43,7 @@ export default async function Home() {
             Lobiie
           </Link>
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <Link
               href={secondaryHref}
               className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "rounded-full")}
