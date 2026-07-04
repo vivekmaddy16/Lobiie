@@ -15,6 +15,19 @@ import {
   ShieldCheckIcon,
   VideoIcon,
   WifiIcon,
+  SearchIcon,
+  PaperclipIcon,
+  SendIcon,
+  PinIcon,
+  UserPlusIcon,
+  UsersIcon,
+  MessageSquareIcon,
+  PhoneIcon,
+  MoreVerticalIcon,
+  CheckCheckIcon,
+  CheckIcon,
+  ChevronRightIcon,
+  GlobeIcon
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -24,16 +37,10 @@ import {
   AvatarImage,
   AvatarGroup,
   AvatarGroupCount,
+  AvatarBadge,
 } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { MediaStage } from "@/components/workspace/media-stage"
 import { CreateRoomDialog } from "@/components/workspace/create-room-dialog"
@@ -70,6 +77,16 @@ function roomIcon(kind: WorkspaceRoom["kind"]) {
   return HashIcon
 }
 
+function getRoomGradient(kind: WorkspaceRoom["kind"]) {
+  if (kind === "VOICE") {
+    return "bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+  }
+  if (kind === "VIDEO") {
+    return "bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
+  }
+  return "bg-blue-100 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400"
+}
+
 export function WorkspaceShell({
   viewer,
   communities,
@@ -82,6 +99,8 @@ export function WorkspaceShell({
   const connected = useRoomStore((state) => state.connected)
   const messagesByRoom = useRoomStore((state) => state.messagesByRoom)
 
+  const [activeTab, setActiveTab] = useState<"rooms" | "communities" | "members">("rooms")
+  const [searchQuery, setSearchQuery] = useState("")
   const [messageContent, setMessageContent] = useState("")
   const [sendingMessage, setSendingMessage] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
@@ -175,438 +194,572 @@ export function WorkspaceShell({
     }
   }
 
+  function handleAttachTactics() {
+    setMessageContent(
+      "We need to control the midfield and exploit their defensive weaknesses. Bruno and Paul, I'm counting on your creativity. Marcus and Jadon, stretch their defense wide. Use your pace and take on their full-backs."
+    )
+    toast.success("Tactical details auto-attached to text area! Press Send to share.")
+  }
+
+  // Filter lists based on search query
+  const filteredRooms = currentCommunity.rooms.filter((room) =>
+    room.name.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  const filteredCommunities = communities.filter((community) =>
+    community.name.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  const filteredMembers = currentCommunity.featuredMembers.filter((member) =>
+    member.name.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
   return (
-    <div className="min-h-screen px-4 py-5 sm:px-6 sm:py-6">
-      <div className="mx-auto max-w-7xl space-y-4">
-        {/* ── Header ── */}
-        <header className="rounded-[2rem] border border-white/60 bg-white/75 p-5 shadow-[0_20px_80px_-50px_rgba(15,23,42,0.45)] backdrop-blur dark:border-white/10 dark:bg-zinc-900/80 xl:p-6">
-          <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-            <div className="space-y-3">
-              <Link
-                href="/"
-                className="text-sm uppercase tracking-[0.28em] text-muted-foreground"
-              >
-                Lobiie
-              </Link>
-              <div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <h1 className="font-heading text-4xl leading-none text-foreground sm:text-5xl">
-                    {currentCommunity.name}
-                  </h1>
-                  <Badge variant="outline">{currentCommunity.role}</Badge>
-                  <Badge variant={connected ? "default" : "outline"}>
-                    <WifiIcon />
-                    {connected ? "Socket live" : "Connecting"}
-                  </Badge>
-                </div>
-                <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground sm:text-base">
-                  {currentCommunity.description}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 self-start">
-              {canManage ? (
-                <InviteDialog communityId={currentCommunity.id} />
-              ) : null}
-              <ThemeToggle />
-              <div className="flex items-center gap-3 rounded-full border bg-background/80 px-3 py-2 dark:border-white/10 dark:bg-zinc-800/80">
-                <div className="text-right">
-                  <p className="text-sm font-medium">{viewer.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {viewer.email}
+    <div className="min-h-screen bg-[#F3F4F6] dark:bg-zinc-950 p-4 md:p-6 lg:p-8 flex items-center justify-center">
+      <div className="w-full max-w-7xl h-[calc(100vh-4rem)] min-h-[600px] flex gap-4 overflow-hidden">
+        {/* ── Left Sidebar (Unified Navigation Pane) ── */}
+        <aside className="w-[320px] md:w-[350px] lg:w-[380px] shrink-0 h-full flex flex-col bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.03)] overflow-hidden">
+          {/* Sidebar Header */}
+          <div className="p-5 flex flex-col gap-4 border-b border-zinc-100 dark:border-zinc-800">
+            {/* User details row */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="relative">
+                  <Avatar size="lg">
+                    <AvatarImage src={viewer.imageUrl ?? undefined} />
+                    <AvatarFallback>{getInitials(viewer.name)}</AvatarFallback>
+                  </Avatar>
+                  <AvatarBadge className="bg-emerald-500 ring-2 ring-white dark:ring-zinc-900" />
+                </span>
+                <div className="min-w-0">
+                  <p className="font-semibold text-zinc-800 dark:text-zinc-200 leading-snug truncate">
+                    {viewer.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground leading-none mt-0.5">
+                    Info account
                   </p>
                 </div>
-                <UserButton
-                  appearance={{
-                    elements: {
-                      userButtonAvatarBox: "size-10",
-                    },
-                  }}
-                />
+              </div>
+              <div className="flex items-center gap-2">
+                <SearchIcon className="size-4.5 text-muted-foreground cursor-pointer hover:text-foreground transition" />
+                <div className="rounded-full border bg-background p-1.5 dark:border-white/10 dark:bg-zinc-800/80">
+                  <UserButton
+                    appearance={{
+                      elements: {
+                        userButtonAvatarBox: "size-7",
+                      },
+                    }}
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        </header>
 
-        {/* ── Main Grid ── */}
-        <div className="grid gap-4 xl:grid-cols-[290px_1fr]">
-          {/* ── Sidebar ── */}
-          <div className="space-y-4">
-            {/* Communities card */}
-            <Card
-              className={cn(
-                "overflow-hidden bg-card/80 backdrop-blur dark:bg-zinc-900/80",
-                "before:absolute before:inset-x-0 before:top-0 before:h-24 before:bg-gradient-to-br",
-                accentStyles[currentCommunity.accent] ?? accentStyles.amber
-              )}
-            >
-              <CardHeader className="relative">
-                <CardTitle>Communities</CardTitle>
-                <CardDescription>
-                  Switch contexts and keep each crew&apos;s rooms organized.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="relative space-y-3">
-                {communities.map((community) => (
+            {/* Navigation Pills */}
+            <div className="bg-zinc-100 dark:bg-zinc-800/60 p-1 rounded-full flex gap-1 text-sm font-medium">
+              <button
+                type="button"
+                className={cn(
+                  "flex-1 py-1.5 rounded-full text-center transition",
+                  activeTab === "rooms"
+                    ? "bg-white dark:bg-zinc-800 text-foreground shadow-xs"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+                onClick={() => {
+                  setActiveTab("rooms")
+                  setSearchQuery("")
+                }}
+              >
+                Rooms
+              </button>
+              <button
+                type="button"
+                className={cn(
+                  "flex-1 py-1.5 rounded-full text-center transition",
+                  activeTab === "communities"
+                    ? "bg-white dark:bg-zinc-800 text-foreground shadow-xs"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+                onClick={() => {
+                  setActiveTab("communities")
+                  setSearchQuery("")
+                }}
+              >
+                Crews
+              </button>
+              <button
+                type="button"
+                className={cn(
+                  "flex-1 py-1.5 rounded-full text-center transition",
+                  activeTab === "members"
+                    ? "bg-white dark:bg-zinc-800 text-foreground shadow-xs"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+                onClick={() => {
+                  setActiveTab("members")
+                  setSearchQuery("")
+                }}
+              >
+                Team
+              </button>
+            </div>
+
+            {/* Tab search filter */}
+            <div className="relative">
+              <SearchIcon className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder={`Search ${activeTab}...`}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl text-xs focus:outline-none focus:ring-1 focus:ring-primary/45"
+              />
+            </div>
+          </div>
+
+          {/* Sidebar List Scrollable Area */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-zinc-50/20 dark:bg-zinc-950/5">
+            {activeTab === "rooms" && (
+              <>
+                {/* Pinned Room Section */}
+                {filteredRooms.length > 0 && (
+                  <div>
+                    <div className="px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+                      <PinIcon className="size-3 text-primary" /> Pinned Message
+                    </div>
+                    {/* Render first room as pinned */}
+                    {(() => {
+                      const room = filteredRooms[0]
+                      const isSelected = room.id === activeRoom?.id
+                      const Icon = roomIcon(room.kind)
+                      const isPulseCheck = room.slug === "pulse-check"
+
+                      return (
+                        <button
+                          key={room.id}
+                          type="button"
+                          className={cn(
+                            "w-full text-left rounded-2xl border p-3.5 transition flex items-center justify-between gap-3 shadow-xs",
+                            isSelected
+                              ? "bg-white dark:bg-zinc-800 border-zinc-200/50 dark:border-zinc-700/80 shadow-md scale-[1.01] relative z-10"
+                              : "bg-white/50 border-zinc-100 hover:border-zinc-200 hover:bg-white dark:bg-zinc-900/40 dark:border-zinc-800 dark:hover:bg-zinc-900/60"
+                          )}
+                          onClick={() => setActiveRoom(room.id)}
+                        >
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <span className={cn("rounded-full p-2.5 shrink-0", getRoomGradient(room.kind))}>
+                              <Icon className="size-4.5" />
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5">
+                                <p className="font-semibold text-zinc-800 dark:text-zinc-100 truncate text-sm">
+                                  {room.name}
+                                </p>
+                                <GlobeIcon className="size-3 text-muted-foreground shrink-0" />
+                              </div>
+                              <p className={cn(
+                                "text-xs truncate mt-0.5",
+                                isPulseCheck ? "text-emerald-600 dark:text-emerald-400 font-medium animate-pulse" : "text-muted-foreground"
+                              )}>
+                                {isPulseCheck ? "Rashford is typing..." : (room.topic ?? "Join the channel")}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end gap-1.5 shrink-0">
+                            <span className="text-[10px] text-muted-foreground">09:12 AM</span>
+                            <div className="flex items-center gap-1">
+                              {isSelected ? (
+                                <CheckCheckIcon className="size-3.5 text-blue-500" />
+                              ) : (
+                                <span className="size-2 rounded-full bg-emerald-500" />
+                              )}
+                            </div>
+                          </div>
+                        </button>
+                      )
+                    })()}
+                  </div>
+                )}
+
+                {/* Rooms List Section */}
+                <div>
+                  <div className="px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+                    <MessageSquareIcon className="size-3 text-primary" /> Rooms
+                  </div>
+                  <div className="space-y-2">
+                    {filteredRooms.slice(1).map((room) => {
+                      const isSelected = room.id === activeRoom?.id
+                      const Icon = roomIcon(room.kind)
+                      const isVideo = room.kind === "VIDEO"
+
+                      return (
+                        <button
+                          key={room.id}
+                          type="button"
+                          className={cn(
+                            "w-full text-left rounded-2xl border p-3.5 transition flex items-center justify-between gap-3 shadow-xs",
+                            isSelected
+                              ? "bg-white dark:bg-zinc-800 border-zinc-200/50 dark:border-zinc-700/80 shadow-md scale-[1.01] relative z-10"
+                              : "bg-white/50 border-zinc-100 hover:border-zinc-200 hover:bg-white dark:bg-zinc-900/40 dark:border-zinc-800 dark:hover:bg-zinc-900/60"
+                          )}
+                          onClick={() => setActiveRoom(room.id)}
+                        >
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <span className={cn("rounded-full p-2.5 shrink-0", getRoomGradient(room.kind))}>
+                              <Icon className="size-4.5" />
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <p className="font-semibold text-zinc-800 dark:text-zinc-100 truncate text-sm">
+                                {room.name}
+                              </p>
+                              <p className="text-xs text-muted-foreground truncate mt-0.5">
+                                {room.topic ?? `${capitalizeKind(room.kind)} room`}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end gap-1.5 shrink-0">
+                            <span className="text-[10px] text-muted-foreground">03:11 AM</span>
+                            <div className="flex items-center gap-1">
+                              {isVideo ? (
+                                <span className="flex size-4.5 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground">
+                                  2
+                                </span>
+                              ) : isSelected ? (
+                                <CheckCheckIcon className="size-3.5 text-blue-500" />
+                              ) : (
+                                <CheckIcon className="size-3.5 text-muted-foreground/60" />
+                              )}
+                            </div>
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {canManage && (
+                  <div className="pt-2">
+                    <CreateRoomDialog communityId={currentCommunity.id} />
+                  </div>
+                )}
+              </>
+            )}
+
+            {activeTab === "communities" && (
+              <div className="space-y-2">
+                {filteredCommunities.map((community) => (
                   <Link
                     key={community.id}
                     href={`/workspace/${community.slug}`}
                     className={cn(
-                      "block rounded-3xl border px-4 py-3 transition",
+                      "block rounded-2xl border p-4 transition shadow-xs",
                       community.id === currentCommunity.id
-                        ? "border-primary/30 bg-primary/6"
-                        : "border-border bg-background/70 hover:border-primary/20 hover:bg-background dark:bg-zinc-800/60 dark:hover:bg-zinc-800"
+                        ? "bg-white dark:bg-zinc-800 border-primary/20 shadow-md scale-[1.01] relative z-10"
+                        : "bg-white/50 border-zinc-100 hover:border-zinc-200 hover:bg-white dark:bg-zinc-900/40 dark:border-zinc-800 dark:hover:bg-zinc-900/60"
                     )}
                   >
                     <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="font-medium">{community.name}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-zinc-800 dark:text-zinc-100 truncate text-sm">
+                          {community.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
                           {community.membershipCount} members
                         </p>
                       </div>
-                      <Badge variant="outline">{community.role}</Badge>
+                      <Badge variant="outline" className="shrink-0">
+                        {community.role}
+                      </Badge>
                     </div>
                   </Link>
                 ))}
-                <div className="rounded-3xl border bg-background/70 p-4 dark:bg-zinc-800/60">
+                <div className="pt-2">
+                  <CreateCommunityDialog />
+                </div>
+              </div>
+            )}
+
+            {activeTab === "members" && (
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
                   <div className="mb-3 flex items-center justify-between">
-                    <p className="font-medium">Visible members</p>
-                    <Badge variant="secondary">
-                      {currentCommunity.membershipCount}
-                    </Badge>
+                    <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+                      Visible Members ({currentCommunity.membershipCount})
+                    </p>
                   </div>
-                  <AvatarGroup>
+                  <AvatarGroup className="justify-start">
                     {currentCommunity.featuredMembers.map((member) => (
-                      <Avatar key={member.id}>
+                      <Avatar key={member.id} size="sm">
                         <AvatarImage src={member.imageUrl ?? undefined} />
-                        <AvatarFallback>
-                          {getInitials(member.name)}
-                        </AvatarFallback>
+                        <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
                       </Avatar>
                     ))}
-                    {currentCommunity.membershipCount >
-                    currentCommunity.featuredMembers.length ? (
+                    {currentCommunity.membershipCount > currentCommunity.featuredMembers.length && (
                       <AvatarGroupCount>
-                        +
-                        {currentCommunity.membershipCount -
-                          currentCommunity.featuredMembers.length}
+                        +{currentCommunity.membershipCount - currentCommunity.featuredMembers.length}
                       </AvatarGroupCount>
-                    ) : null}
+                    )}
                   </AvatarGroup>
                 </div>
-                <CreateCommunityDialog />
-              </CardContent>
-            </Card>
 
-            {/* Online members card */}
-            <Card className="bg-card/80 backdrop-blur dark:bg-zinc-900/80">
-              <CardHeader>
-                <CardTitle>Online now</CardTitle>
-                <CardDescription>
-                  Members active in the current room via Socket.IO presence.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {participants.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed bg-background/60 p-4 text-center text-sm text-muted-foreground dark:bg-zinc-800/40">
-                    Nobody is live in this room yet.
+                <div className="space-y-2">
+                  <div className="px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                    Featured Members List
                   </div>
-                ) : (
-                  participants.map((participant) => (
+                  {filteredMembers.map((member) => (
                     <div
-                      key={participant.socketId}
-                      className="flex items-center gap-3 rounded-2xl border bg-background/70 px-3 py-2 dark:bg-zinc-800/60"
+                      key={member.id}
+                      className="flex items-center gap-3 rounded-2xl border border-zinc-100 bg-white/50 p-3 dark:border-zinc-800/40 dark:bg-zinc-900/20"
                     >
-                      <span className="relative">
-                        <Avatar size="sm">
-                          <AvatarImage
-                            src={participant.imageUrl ?? undefined}
-                          />
-                          <AvatarFallback>
-                            {getInitials(participant.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-background bg-emerald-500" />
-                      </span>
+                      <Avatar size="sm">
+                        <AvatarImage src={member.imageUrl ?? undefined} />
+                        <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
+                      </Avatar>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">
-                          {participant.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {participant.role}
+                        <p className="truncate text-xs font-semibold text-zinc-800 dark:text-zinc-100">
+                          {member.name}
                         </p>
                       </div>
                     </div>
-                  ))
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* ── Content Area ── */}
-          <div className="grid gap-4 2xl:grid-cols-[280px_1fr]">
-            {/* Rooms list */}
-            <Card className="bg-card/80 backdrop-blur dark:bg-zinc-900/80">
-              <CardHeader>
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <CardTitle>Rooms</CardTitle>
-                    <CardDescription>
-                      Pick a lane for messages, voice, or camera time.
-                    </CardDescription>
-                  </div>
-                  {canManage ? (
-                    <Badge variant="outline">Manage</Badge>
-                  ) : null}
+                  ))}
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {currentCommunity.rooms.map((room) => {
-                  const Icon = roomIcon(room.kind)
 
-                  return (
-                    <button
-                      key={room.id}
-                      type="button"
-                      className={cn(
-                        "w-full rounded-3xl border px-4 py-3 text-left transition",
-                        room.id === activeRoom?.id
-                          ? "border-primary/30 bg-primary/6"
-                          : "border-border bg-background/70 hover:border-primary/20 hover:bg-background dark:bg-zinc-800/60 dark:hover:bg-zinc-800"
-                      )}
-                      onClick={() => setActiveRoom(room.id)}
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="rounded-full bg-primary/10 p-2 text-primary">
-                          <Icon className="size-4" />
+                {canManage && (
+                  <div className="pt-2">
+                    <InviteDialog communityId={currentCommunity.id} />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </aside>
+
+        {/* ── Right Column (Unified Chat Client + Media Stage) ── */}
+        <main className="flex-grow h-full flex flex-col bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.03)] overflow-hidden">
+          {activeRoom ? (
+            <>
+              {/* Main Panel Header */}
+              <header className="p-5 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between bg-white/50 dark:bg-zinc-900/50 backdrop-blur z-20">
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className={cn("rounded-full p-2.5 shrink-0", getRoomGradient(activeRoom.kind))}>
+                    {(() => {
+                      const Icon = roomIcon(activeRoom.kind)
+                      return <Icon className="size-5" />
+                    })()}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h2 className="font-bold text-zinc-800 dark:text-zinc-100 truncate text-base leading-none">
+                        {activeRoom.name}
+                      </h2>
+                      <Badge variant="outline" className="text-[10px] py-0 px-2 uppercase shrink-0">
+                        {capitalizeKind(activeRoom.kind)}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate mt-1">
+                      {activeRoom.slug === "pulse-check" ? (
+                        <span className="text-emerald-600 dark:text-emerald-400 font-medium animate-pulse">
+                          Rashford is typing...
                         </span>
-                        <div className="min-w-0">
-                          <p className="truncate font-medium">{room.name}</p>
-                          <p className="truncate text-xs text-muted-foreground">
-                            {room.topic ??
-                              `${capitalizeKind(room.kind)} collaboration room`}
+                      ) : (
+                        activeRoom.topic ?? "Start collaborating here."
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1">
+                    {/* Call toggles */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const voiceRoom = currentCommunity.rooms.find((r) => r.kind === "VOICE")
+                        if (voiceRoom) setActiveRoom(voiceRoom.id)
+                      }}
+                      className="p-2.5 rounded-full text-zinc-500 hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+                      title="Audio Call"
+                    >
+                      <PhoneIcon className="size-5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const videoRoom = currentCommunity.rooms.find((r) => r.kind === "VIDEO")
+                        if (videoRoom) setActiveRoom(videoRoom.id)
+                      }}
+                      className="p-2.5 rounded-full text-zinc-500 hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+                      title="Video Call"
+                    >
+                      <VideoIcon className="size-5" />
+                    </button>
+                    <button
+                      type="button"
+                      className="p-2.5 rounded-full text-zinc-400 hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+                    >
+                      <MoreVerticalIcon className="size-5" />
+                    </button>
+                  </div>
+
+                  <div className="h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-1" />
+
+                  <div className="flex items-center gap-3 shrink-0">
+                    <ThemeToggle />
+                    <Badge variant={connected ? "default" : "outline"} className="text-xs py-0.5 rounded-full shrink-0">
+                      <WifiIcon className="size-3 mr-1.5" />
+                      {connected ? "Connected" : "Syncing"}
+                    </Badge>
+                  </div>
+                </div>
+              </header>
+
+              {/* Main Panel Content Split (Chat & WebRTC Stage) */}
+              <div className="flex-1 flex overflow-hidden">
+                {/* Chat Panel Column */}
+                <div className="flex-1 flex flex-col h-full overflow-hidden">
+                  {/* Messages Feed */}
+                  <div className="flex-grow overflow-y-auto p-5 space-y-4 custom-scrollbar chat-pattern bg-zinc-50/10 dark:bg-zinc-950/5">
+                    <div className="flex justify-center my-2">
+                      <span className="text-[10px] uppercase tracking-wider px-3 py-1 rounded-full bg-white dark:bg-zinc-800 text-muted-foreground font-semibold border border-zinc-200/50 dark:border-zinc-700/50 shadow-xs">
+                        Today
+                      </span>
+                    </div>
+
+                    {activeMessages.length === 0 ? (
+                      <div className="flex h-full items-center justify-center text-center">
+                        <div className="max-w-sm rounded-3xl border border-dashed border-zinc-200 dark:border-zinc-800 p-8">
+                          <MessageSquareIcon className="mx-auto size-8 text-muted-foreground/60 mb-3" />
+                          <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                            Room is empty
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1 leading-normal">
+                            Write a message below to start the thread.
                           </p>
                         </div>
                       </div>
-                    </button>
-                  )
-                })}
-                {canManage ? (
-                  <CreateRoomDialog communityId={currentCommunity.id} />
-                ) : (
-                  <div className="rounded-3xl border border-dashed bg-background/50 p-4 text-sm text-muted-foreground dark:bg-zinc-800/40">
-                    Admins can add new rooms and shape the community flow.
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                    ) : (
+                      activeMessages.map((message) => {
+                        const isViewer = message.author.id === viewer.id
+                        // Detect soccer tactic conversation to display inline tactic diagram mockups
+                        const hasTactics =
+                          message.content.toLowerCase().includes("midfield") ||
+                          message.content.toLowerCase().includes("creativity")
 
-            {/* Active room content */}
-            <div className="grid gap-4">
-              {activeRoom ? (
-                <>
-                  <Card className="bg-card/80 backdrop-blur dark:bg-zinc-900/80">
-                    <CardHeader>
-                      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                        <div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <CardTitle className="text-2xl">
-                              {activeRoom.name}
-                            </CardTitle>
-                            <Badge variant="outline">
-                              {capitalizeKind(activeRoom.kind)}
-                            </Badge>
-                            <Badge variant="secondary">
-                              {participants.length} live now
-                            </Badge>
-                          </div>
-                          <CardDescription className="mt-2">
-                            {activeRoom.topic ??
-                              "Start the conversation here and move into live media when it helps."}
-                          </CardDescription>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="rounded-full border bg-background/70 px-3 py-2 text-sm dark:bg-zinc-800/60">
-                            <span className="font-medium">
-                              {participants.length}
-                            </span>{" "}
-                            active participant
-                            {participants.length === 1 ? "" : "s"}
-                          </div>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="grid gap-4 2xl:grid-cols-[1fr_0.95fr]">
-                      {/* Chat panel */}
-                      <div className="rounded-[2rem] border bg-background/70 p-4 dark:bg-zinc-800/60">
-                        <div className="mb-4 flex items-center justify-between">
-                          <div>
-                            <h2 className="font-medium">Conversation</h2>
-                            <p className="text-sm text-muted-foreground">
-                              Messages are stored in SQLite through Prisma and
-                              mirrored over the live socket.
-                            </p>
-                          </div>
-                          <Badge variant="outline">
-                            {activeMessages.length} messages
-                          </Badge>
-                        </div>
-                        <div className="space-y-3">
-                          <div className="custom-scrollbar max-h-[28rem] space-y-3 overflow-y-auto pr-1">
-                            {activeMessages.length === 0 ? (
-                              <div className="rounded-3xl border border-dashed bg-background/60 p-6 text-center text-sm text-muted-foreground dark:bg-zinc-800/40">
-                                This room is empty. Start the thread and invite
-                                the team in.
+                        return (
+                          <div
+                            key={message.id}
+                            className={cn("flex gap-3 max-w-[85%]", isViewer ? "ml-auto justify-end" : "justify-start")}
+                          >
+                            {!isViewer && (
+                              <Avatar size="sm" className="mt-1 shadow-xs border">
+                                <AvatarImage src={message.author.imageUrl ?? undefined} />
+                                <AvatarFallback>{getInitials(message.author.name)}</AvatarFallback>
+                              </Avatar>
+                            )}
+
+                            <div className={cn("flex flex-col gap-1.5", isViewer ? "items-end" : "items-start")}>
+                              <div className="flex items-center gap-2 px-1 text-[10px] font-semibold text-muted-foreground">
+                                <span>{isViewer ? "You" : message.author.name}</span>
+                                <span>•</span>
+                                <span>{formatRelativeTime(message.createdAt)}</span>
                               </div>
-                            ) : (
-                              activeMessages.map((message) => (
-                                <article
-                                  key={message.id}
-                                  className="rounded-3xl border bg-card px-4 py-3 dark:bg-zinc-800/80"
-                                >
-                                  <div className="flex items-start gap-3">
-                                    <Avatar size="sm">
-                                      <AvatarImage
-                                        src={
-                                          message.author.imageUrl ?? undefined
-                                        }
+
+                              <div
+                                className={cn(
+                                  "px-4.5 py-3 rounded-2xl shadow-xs text-sm leading-6 whitespace-pre-wrap",
+                                  isViewer
+                                    ? "bg-blue-600 text-white rounded-tr-none shadow-blue-500/5"
+                                    : "bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 border border-zinc-100 dark:border-zinc-800/80 rounded-tl-none"
+                                )}
+                              >
+                                <p>{message.content}</p>
+
+                                {hasTactics && (
+                                  <div className="mt-3.5 grid grid-cols-2 gap-2 max-w-sm">
+                                    <div className="relative group overflow-hidden rounded-xl border border-white/20 shadow-md">
+                                      <img
+                                        src="/tactic_board_green.png"
+                                        alt="Green Tactical Pitch Diagram"
+                                        className="aspect-[4/3] object-cover w-full scale-100 group-hover:scale-105 transition duration-300"
                                       />
-                                      <AvatarFallback>
-                                        {getInitials(message.author.name)}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                    <div className="min-w-0 flex-1">
-                                      <div className="flex flex-wrap items-center gap-2">
-                                        <p className="font-medium">
-                                          {message.author.name}
-                                        </p>
-                                        <span className="text-xs text-muted-foreground">
-                                          {formatRelativeTime(
-                                            message.createdAt
-                                          )}
-                                        </span>
-                                      </div>
-                                      <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-foreground/90">
-                                        {message.content}
-                                      </p>
+                                    </div>
+                                    <div className="relative group overflow-hidden rounded-xl border border-white/20 shadow-md">
+                                      <img
+                                        src="/tactic_board_white.png"
+                                        alt="White Tactical Formations schematic"
+                                        className="aspect-[4/3] object-cover w-full scale-100 group-hover:scale-105 transition duration-300"
+                                      />
                                     </div>
                                   </div>
-                                </article>
-                              ))
-                            )}
-                            <div ref={messagesEndRef} />
-                          </div>
-                          <form
-                            className="space-y-3"
-                            onSubmit={handleSendMessage}
-                          >
-                            <Textarea
-                              placeholder={`Message #${activeRoom.slug}`}
-                              value={messageContent}
-                              onChange={(event) =>
-                                setMessageContent(event.target.value)
-                              }
-                              onKeyDown={handleKeyDown}
-                            />
-                            <div className="flex items-center justify-between gap-3">
-                              <p className="text-xs text-muted-foreground">
-                                Press Enter to send · Shift+Enter for newline
-                              </p>
-                              <Button type="submit" disabled={sendingMessage}>
-                                {sendingMessage ? "Sending" : "Send update"}
-                              </Button>
+                                )}
+                              </div>
                             </div>
-                          </form>
+                          </div>
+                        )
+                      })
+                    )}
+                    <div ref={messagesEndRef} />
+                  </div>
+
+                  {/* Input message bar */}
+                  <div className="p-4 border-t border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+                    <form className="space-y-3" onSubmit={handleSendMessage}>
+                      <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-2 focus-within:border-primary/50 transition">
+                        <Textarea
+                          placeholder={`Message #${activeRoom.slug}`}
+                          value={messageContent}
+                          onChange={(event) => setMessageContent(event.target.value)}
+                          onKeyDown={handleKeyDown}
+                          className="min-h-[50px] max-h-[160px] border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-2 py-1 bg-transparent text-sm resize-none custom-scrollbar"
+                        />
+                        <div className="flex items-center justify-between gap-3 px-2 pt-2 border-t border-zinc-200/50 dark:border-zinc-800/50 mt-1">
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={handleAttachTactics}
+                              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-zinc-200/50 dark:hover:bg-zinc-800 transition"
+                              title="Attach Football Tactics Diagram"
+                            >
+                              <PaperclipIcon className="size-4.5" />
+                            </button>
+                            <span className="text-[10px] text-muted-foreground">
+                              Press Enter to send · Shift+Enter for newline
+                            </span>
+                          </div>
+                          <Button
+                            type="submit"
+                            size="sm"
+                            disabled={sendingMessage || !messageContent.trim()}
+                            className="rounded-xl px-4 py-1.5 h-8 gap-1.5 shrink-0"
+                          >
+                            <span>Send</span>
+                            <SendIcon className="size-3.5" />
+                          </Button>
                         </div>
                       </div>
-                      <MediaStage
-                        key={activeRoom.id}
-                        viewer={viewer}
-                        room={activeRoom}
-                      />
-                    </CardContent>
-                  </Card>
-
-                  {/* Info cards row */}
-                  <div className="grid gap-4 lg:grid-cols-3">
-                    <Card className="bg-card/80 backdrop-blur dark:bg-zinc-900/80">
-                      <CardHeader>
-                        <CardTitle>Permissions</CardTitle>
-                        <CardDescription>
-                          Community membership gates both reads and writes.
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-3 text-sm">
-                        <div className="rounded-3xl border bg-background/70 p-4 dark:bg-zinc-800/60">
-                          <ShieldCheckIcon className="mb-3 size-5 text-primary" />
-                          <p className="font-medium">Role aware</p>
-                          <p className="mt-1 text-muted-foreground">
-                            Current role: {currentCommunity.role}. Admin actions
-                            are restricted server-side.
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    <Card className="bg-card/80 backdrop-blur dark:bg-zinc-900/80">
-                      <CardHeader>
-                        <CardTitle>Realtime</CardTitle>
-                        <CardDescription>
-                          Socket presence and signaling are active for this
-                          room.
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-3 text-sm">
-                        <div className="rounded-3xl border bg-background/70 p-4 dark:bg-zinc-800/60">
-                          <WifiIcon className="mb-3 size-5 text-primary" />
-                          <p className="font-medium">Transport status</p>
-                          <p className="mt-1 text-muted-foreground">
-                            {connected
-                              ? "Connected and syncing participants now."
-                              : "Reconnecting to the socket server."}
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    <Card className="bg-card/80 backdrop-blur dark:bg-zinc-900/80">
-                      <CardHeader>
-                        <CardTitle>Community</CardTitle>
-                        <CardDescription>
-                          {currentCommunity.membershipCount} members ·{" "}
-                          {currentCommunity.rooms.length} rooms
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-3 text-sm">
-                        <div className="rounded-3xl border bg-background/70 p-4 dark:bg-zinc-800/60">
-                          <AvatarGroup>
-                            {currentCommunity.featuredMembers
-                              .slice(0, 3)
-                              .map((member) => (
-                                <Avatar key={member.id} size="sm">
-                                  <AvatarImage
-                                    src={member.imageUrl ?? undefined}
-                                  />
-                                  <AvatarFallback>
-                                    {getInitials(member.name)}
-                                  </AvatarFallback>
-                                </Avatar>
-                              ))}
-                          </AvatarGroup>
-                          <p className="mt-3 font-medium">Team</p>
-                          <p className="mt-1 text-muted-foreground">
-                            {canManage
-                              ? "You can invite members and manage rooms."
-                              : "Ask an admin to add more members."}
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    </form>
                   </div>
-                </>
-              ) : null}
+                </div>
+
+                {/* WebRTC Video Call / Huddle Stage Column */}
+                {activeRoom.kind !== "CHAT" && (
+                  <div className="w-[320px] md:w-[360px] lg:w-[400px] shrink-0 border-l border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/20 p-4 overflow-y-auto custom-scrollbar">
+                    <MediaStage key={activeRoom.id} viewer={viewer} room={activeRoom} />
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center flex-1 p-6 text-center">
+              <GlobeIcon className="size-12 text-muted-foreground/40 mb-3" />
+              <h3 className="text-lg font-bold text-zinc-800 dark:text-zinc-200">
+                Welcome to Lobiie
+              </h3>
+              <p className="text-sm text-muted-foreground max-w-sm mt-1">
+                Select a channel/room from the sidebar or switch communities to get started.
+              </p>
             </div>
-          </div>
-        </div>
+          )}
+        </main>
       </div>
     </div>
   )
