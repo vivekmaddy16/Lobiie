@@ -100,6 +100,14 @@ app.prepare().then(() => {
       socket.to(roomId).emit("chat:message", message)
     })
 
+    socket.on("chat:typing", ({ roomId, isTyping, userName }) => {
+      if (!roomId) {
+        return
+      }
+
+      socket.to(roomId).emit("chat:typing", { socketId: socket.id, isTyping, userName })
+    })
+
     socket.on("media:toggle", ({ roomId, audioEnabled, videoEnabled }) => {
       if (!roomId) {
         return

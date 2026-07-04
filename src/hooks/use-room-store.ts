@@ -15,6 +15,7 @@ type RoomStore = {
   participants: PresenceParticipant[]
   connected: boolean
   localMedia: LocalMediaState
+  typingUsers: Record<string, string[]>
   hydrateCommunity: (community: WorkspaceCommunity) => void
   setActiveRoom: (roomId: string) => void
   addMessage: (message: WorkspaceMessage) => void
@@ -23,6 +24,12 @@ type RoomStore = {
   setConnected: (connected: boolean) => void
   toggleAudio: () => void
   toggleVideo: () => void
+  setTypingUser: (
+    roomId: string,
+    socketId: string,
+    isTyping: boolean,
+    userName: string
+  ) => void
 }
 
 function dedupeMessages(messages: WorkspaceMessage[]) {
@@ -47,6 +54,7 @@ export const useRoomStore = create<RoomStore>((set) => ({
     audioEnabled: true,
     videoEnabled: true,
   },
+  typingUsers: {},
   hydrateCommunity: (community) =>
     set((state) => {
       const nextMessagesByRoom = { ...state.messagesByRoom }
@@ -68,10 +76,14 @@ export const useRoomStore = create<RoomStore>((set) => ({
       }
     }),
   setActiveRoom: (roomId) =>
-    set({
+    set((state) => ({
       activeRoomId: roomId,
       participants: [],
-    }),
+      typingUsers: {
+        ...state.typingUsers,
+        [roomId]: [],
+      },
+    })),
   addMessage: (message) =>
     set((state) => ({
       messagesByRoom: {
@@ -89,6 +101,7 @@ export const useRoomStore = create<RoomStore>((set) => ({
   resetParticipants: () =>
     set({
       participants: [],
+      typingUsers: {},
     }),
   setConnected: (connected) =>
     set({
@@ -108,4 +121,26 @@ export const useRoomStore = create<RoomStore>((set) => ({
         videoEnabled: !state.localMedia.videoEnabled,
       },
     })),
+  setTypingUser: (roomId, socketId, isTyping, userName) =>
+    set((state) => {
+      const roomTyping = state.typingUsers[roomId] ?? []
+      let nextRoomTyping
+
+      if (isTyping) {
+        if (!roomTyping.includes(userName)) {
+          nextRoomTyping = [...roomTyping, userName]
+        } else {
+          nextRoomTyping = roomTyping
+        }
+      } else {
+        nextRoomTyping = roomTyping.filter((name) => name !== userName)
+      }
+
+      return {
+        typingUsers: {
+          ...state.typingUsers,
+          [roomId]: nextRoomTyping,
+        },
+      }
+    }),
 }))

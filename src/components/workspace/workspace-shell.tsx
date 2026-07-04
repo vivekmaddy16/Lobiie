@@ -88,6 +88,13 @@ function getRoomGradient(kind: WorkspaceRoom["kind"]) {
   return "bg-blue-100 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400"
 }
 
+function getTypingText(names: string[]) {
+  if (names.length === 0) return null
+  if (names.length === 1) return `${names[0]} is typing...`
+  if (names.length === 2) return `${names[0]} and ${names[1]} are typing...`
+  return "Several people are typing..."
+}
+
 export function WorkspaceShell({
   viewer,
   communities,
@@ -99,12 +106,31 @@ export function WorkspaceShell({
   const participants = useRoomStore((state) => state.participants)
   const connected = useRoomStore((state) => state.connected)
   const messagesByRoom = useRoomStore((state) => state.messagesByRoom)
+  const typingUsers = useRoomStore((state) => state.typingUsers)
 
   const [activeTab, setActiveTab] = useState<"rooms" | "communities" | "members">("rooms")
   const [searchQuery, setSearchQuery] = useState("")
   const [messageContent, setMessageContent] = useState("")
   const [sendingMessage, setSendingMessage] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
+
+  const [isTypingLocal, setIsTypingLocal] = useState(false)
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current)
+    }
+    setIsTypingLocal(false)
+  }, [activeRoomId])
 
   useEffect(() => {
     startTransition(() => {
@@ -142,6 +168,36 @@ export function WorkspaceShell({
     },
   })
 
+  const handleTextChange = (val: string) => {
+    setMessageContent(val)
+
+    if (!activeRoom) return
+
+    const socket = getSocket()
+
+    if (!isTypingLocal) {
+      setIsTypingLocal(true)
+      socket.emit("chat:typing", {
+        roomId: activeRoom.id,
+        isTyping: true,
+        userName: viewer.name,
+      })
+    }
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current)
+    }
+
+    typingTimeoutRef.current = setTimeout(() => {
+      setIsTypingLocal(false)
+      socket.emit("chat:typing", {
+        roomId: activeRoom.id,
+        isTyping: false,
+        userName: viewer.name,
+      })
+    }, 2000)
+  }
+
   async function handleSendMessage(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
@@ -175,6 +231,17 @@ export function WorkspaceShell({
         message: payload.message,
       })
       useRoomStore.getState().addMessage(payload.message)
+
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+      setIsTypingLocal(false)
+      socket.emit("chat:typing", {
+        roomId: activeRoom.id,
+        isTyping: false,
+        userName: viewer.name,
+      })
+
       setMessageContent("")
     } catch (error) {
       toast.error(
@@ -339,7 +406,8 @@ export function WorkspaceShell({
                       const room = filteredRooms[0]
                       const isSelected = room.id === activeRoom?.id
                       const Icon = roomIcon(room.kind)
-                      const isPulseCheck = room.slug === "pulse-check"
+                      const roomTyping = typingUsers[room.id] ?? []
+                      const typingText = getTypingText(roomTyping)
 
                       return (
                         <button
@@ -366,9 +434,9 @@ export function WorkspaceShell({
                               </div>
                               <p className={cn(
                                 "text-xs truncate mt-0.5",
-                                isPulseCheck ? "text-emerald-600 dark:text-emerald-400 font-medium animate-pulse" : "text-muted-foreground"
+                                typingText ? "text-emerald-600 dark:text-emerald-400 font-medium animate-pulse" : "text-muted-foreground"
                               )}>
-                                {isPulseCheck ? "Rashford is typing..." : (room.topic ?? "Join the channel")}
+                                {typingText ?? (room.topic ?? "Join the channel")}
                               </p>
                             </div>
                           </div>
@@ -398,6 +466,8 @@ export function WorkspaceShell({
                       const isSelected = room.id === activeRoom?.id
                       const Icon = roomIcon(room.kind)
                       const isVideo = room.kind === "VIDEO"
+                      const roomTyping = typingUsers[room.id] ?? []
+                      const typingText = getTypingText(roomTyping)
 
                       return (
                         <button
@@ -419,8 +489,11 @@ export function WorkspaceShell({
                               <p className="font-semibold text-zinc-800 dark:text-zinc-100 truncate text-sm">
                                 {room.name}
                               </p>
-                              <p className="text-xs text-muted-foreground truncate mt-0.5">
-                                {room.topic ?? `${capitalizeKind(room.kind)} room`}
+                              <p className={cn(
+                                "text-xs truncate mt-0.5",
+                                typingText ? "text-emerald-600 dark:text-emerald-400 font-medium animate-pulse" : "text-muted-foreground"
+                              )}>
+                                {typingText ?? (room.topic ?? `${capitalizeKind(room.kind)} room`)}
                               </p>
                             </div>
                           </div>
@@ -564,13 +637,18 @@ export function WorkspaceShell({
                       </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground truncate mt-1">
-                      {activeRoom.slug === "pulse-check" ? (
-                        <span className="text-emerald-600 dark:text-emerald-400 font-medium animate-pulse">
-                          Rashford is typing...
-                        </span>
-                      ) : (
-                        activeRoom.topic ?? "Start collaborating here."
-                      )}
+                      {(() => {
+                        const activeTyping = typingUsers[activeRoom.id] ?? []
+                        const typingText = getTypingText(activeTyping)
+                        if (typingText) {
+                          return (
+                            <span className="text-emerald-600 dark:text-emerald-400 font-medium animate-pulse">
+                              {typingText}
+                            </span>
+                          )
+                        }
+                        return activeRoom.topic ?? "Start collaborating here."
+                      })()}
                     </p>
                   </div>
                 </div>
@@ -715,7 +793,7 @@ export function WorkspaceShell({
                         <Textarea
                           placeholder={`Message #${activeRoom.slug}`}
                           value={messageContent}
-                          onChange={(event) => setMessageContent(event.target.value)}
+                          onChange={(event) => handleTextChange(event.target.value)}
                           onKeyDown={handleKeyDown}
                           className="min-h-[50px] max-h-[160px] border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-2 py-1 bg-transparent text-sm resize-none custom-scrollbar"
                         />

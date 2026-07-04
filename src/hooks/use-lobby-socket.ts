@@ -68,10 +68,27 @@ export function useLobbySocket({
       handleMessage(message)
     }
 
+    function onTyping({
+      socketId,
+      isTyping,
+      userName,
+    }: {
+      socketId: string
+      isTyping: boolean
+      userName: string
+    }) {
+      if (roomId) {
+        useRoomStore
+          .getState()
+          .setTypingUser(roomId, socketId, isTyping, userName)
+      }
+    }
+
     socket.on("connect", onConnect)
     socket.on("disconnect", onDisconnect)
     socket.on("room:participants", onParticipants)
     socket.on("chat:message", onMessage)
+    socket.on("chat:typing", onTyping)
 
     if (!socket.connected) {
       socket.connect()
@@ -84,6 +101,7 @@ export function useLobbySocket({
       socket.off("disconnect", onDisconnect)
       socket.off("room:participants", onParticipants)
       socket.off("chat:message", onMessage)
+      socket.off("chat:typing", onTyping)
     }
   }, [])
 
