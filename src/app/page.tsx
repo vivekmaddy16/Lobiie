@@ -38,24 +38,27 @@ export default async function Home() {
 
       <div className="mx-auto flex w-full max-w-7xl flex-col px-4 py-6 sm:px-6 lg:px-8 flex-grow justify-between gap-8">
         {/* Header */}
-        <header className="flex items-center justify-between rounded-full border border-white/60 bg-white/75 px-6 py-3.5 shadow-[0_8px_30px_rgb(0,0,0,0.02)] backdrop-blur dark:border-white/10 dark:bg-zinc-900/80">
-          <Link href="/" className="font-heading text-2xl font-bold tracking-tight text-foreground">
-            Lobiie
-          </Link>
+        <header className="flex items-center justify-between rounded-2xl border border-zinc-200/50 bg-white/80 dark:border-zinc-800/80 dark:bg-zinc-900/70 px-6 py-3.5 shadow-[0_8px_30px_rgb(0,0,0,0.03)] backdrop-blur-md transition-all duration-300">
+          <div className="flex items-center gap-1.5">
+            <Link href="/" className="font-heading text-2xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600 bg-clip-text text-transparent hover:opacity-90 transition">
+              Lobiie
+            </Link>
+            <span className="size-1.5 rounded-full bg-blue-500 dark:bg-blue-400 animate-pulse mt-1" />
+          </div>
           <div className="flex items-center gap-3">
             <ThemeToggle />
             <Link
               href={secondaryHref}
-              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "rounded-full")}
+              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "rounded-xl text-zinc-600 dark:text-zinc-400 hover:text-foreground")}
             >
               {session.userId ? "Open app" : "Sign in"}
             </Link>
             <Link
               href={primaryHref}
-              className={cn(buttonVariants({ size: "sm" }), "rounded-full shadow-md bg-blue-600 hover:bg-blue-700 text-white border-0")}
+              className={cn(buttonVariants({ size: "sm" }), "rounded-xl shadow-md bg-blue-600 hover:bg-blue-700 text-white border-0 transition duration-200 hover:scale-[1.02]")}
             >
               {session.userId ? "Workspace" : "Get started"}
-              <ArrowRightIcon className="size-3.5" />
+              <ArrowRightIcon className="size-3.5 ml-1" />
             </Link>
           </div>
         </header>
