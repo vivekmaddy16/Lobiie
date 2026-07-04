@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { SignOutButton, UserButton } from "@clerk/nextjs"
 import {
   startTransition,
@@ -113,6 +114,7 @@ export function WorkspaceShell({
   communities,
   currentCommunity,
 }: WorkspacePayload) {
+  const router = useRouter()
   const hydrateCommunity = useRoomStore((state) => state.hydrateCommunity)
   const activeRoomId = useRoomStore((state) => state.activeRoomId)
   const setActiveRoom = useRoomStore((state) => state.setActiveRoom)
@@ -193,6 +195,47 @@ export function WorkspaceShell({
       toast.error(error instanceof Error ? error.message : "Failed to copy invite link.")
     } finally {
       setIsGeneratingInvite(false)
+    }
+  }
+
+  const [creatingCallRoom, setCreatingCallRoom] = useState(false)
+
+  const handleStartCall = async (kind: "VOICE" | "VIDEO") => {
+    const existingRoom = currentCommunity.rooms.find((r) => r.kind === kind)
+    if (existingRoom) {
+      setActiveRoom(existingRoom.id)
+      return
+    }
+
+    setCreatingCallRoom(true)
+    const name = kind === "VOICE" ? "voice-huddle" : "video-huddle"
+    const topic = kind === "VOICE" ? "Audio huddle stage" : "Video stage"
+
+    try {
+      const response = await fetch(`/api/communities/${currentCommunity.id}/rooms`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          topic,
+          kind,
+        }),
+      })
+
+      const payload = await response.json()
+      if (!response.ok) {
+        throw new Error(payload.error ?? "Failed to create room for call.")
+      }
+
+      toast.success(`${kind === "VOICE" ? "Voice" : "Video"} huddle started.`)
+      setActiveRoom(payload.room.id)
+      router.refresh()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to start call.")
+    } finally {
+      setCreatingCallRoom(false)
     }
   }
 
@@ -786,22 +829,18 @@ export function WorkspaceShell({
                     {/* Call toggles */}
                     <button
                       type="button"
-                      onClick={() => {
-                        const voiceRoom = currentCommunity.rooms.find((r) => r.kind === "VOICE")
-                        if (voiceRoom) setActiveRoom(voiceRoom.id)
-                      }}
-                      className="p-2.5 rounded-full text-zinc-500 hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+                      onClick={() => handleStartCall("VOICE")}
+                      disabled={creatingCallRoom}
+                      className="p-2.5 rounded-full text-zinc-500 hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 transition disabled:opacity-50 cursor-pointer"
                       title="Audio Call"
                     >
                       <PhoneIcon className="size-5" />
                     </button>
                     <button
                       type="button"
-                      onClick={() => {
-                        const videoRoom = currentCommunity.rooms.find((r) => r.kind === "VIDEO")
-                        if (videoRoom) setActiveRoom(videoRoom.id)
-                      }}
-                      className="p-2.5 rounded-full text-zinc-500 hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+                      onClick={() => handleStartCall("VIDEO")}
+                      disabled={creatingCallRoom}
+                      className="p-2.5 rounded-full text-zinc-500 hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 transition disabled:opacity-50 cursor-pointer"
                       title="Video Call"
                     >
                       <VideoIcon className="size-5" />
