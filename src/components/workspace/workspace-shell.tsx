@@ -205,51 +205,91 @@ export function WorkspaceShell({
       return
     }
 
-    setSendingMessage(true)
+    const contentToSend = messageContent
+    const tempId = `temp-${Date.now()}`
 
-    try {
-      const response = await fetch("/api/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          roomId: activeRoom.id,
-          content: messageContent,
-        }),
-      })
-
-      const payload = await response.json()
-
-      if (!response.ok) {
-        throw new Error(payload.error ?? "Unable to send message.")
-      }
-
-      const socket = getSocket()
-      socket.emit("chat:message", {
-        roomId: activeRoom.id,
-        message: payload.message,
-      })
-      useRoomStore.getState().addMessage(payload.message)
-
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current)
-      }
-      setIsTypingLocal(false)
-      socket.emit("chat:typing", {
-        roomId: activeRoom.id,
-        isTyping: false,
-        userName: viewer.name,
-      })
-
-      setMessageContent("")
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Unable to send message."
-      )
-    } finally {
-      setSendingMessage(false)
+    const tempMessage = {
+      id: tempId,
+      content: contentToSend,
+      createdAt: new Date().toISOString(),
+      roomId: activeRoom.id,
+      author: {
+        id: viewer.id,
+        name: viewer.name,
+        imageUrl: viewer.imageUrl,
+      },
     }
+
+    // 1. Optimistically append message to feed
+    useRoomStore.getState().addMessage(tempMessage)
+
+    // 2. Clear typing timeout and status locally & remote
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current)
+    }
+    setIsTypingLocal(false)
+    const socket = getSocket()
+    socket.emit("chat:typing", {
+      roomId: activeRoom.id,
+      isTyping: false,
+      userName: viewer.name,
+    })
+
+    // 3. Clear text input instantly (snappy UI!)
+    setMessageContent("")
+
+    // 4. Send background fetch to save message
+    fetch("/api/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        roomId: activeRoom.id,
+        content: contentToSend,
+      }),
+    })
+      .then(async (response) => {
+        const payload = await response.json()
+        if (!response.ok) {
+          throw new Error(payload.error ?? "Failed to save message")
+        }
+
+        // 5. Replace optimistic message with actual db message
+        useRoomStore.setState((state) => {
+          const roomMessages = state.messagesByRoom[activeRoom.id] ?? []
+          const updatedMessages = roomMessages.map((msg) =>
+            msg.id === tempId ? payload.message : msg
+          )
+          return {
+            messagesByRoom: {
+              ...state.messagesByRoom,
+              [activeRoom.id]: updatedMessages,
+            },
+          }
+        })
+
+        // 6. Broadcast socket message event
+        socket.emit("chat:message", {
+          roomId: activeRoom.id,
+          message: payload.message,
+        })
+      })
+      .catch((error) => {
+        // 7. On error, remove optimistic message from feed and restore text
+        useRoomStore.setState((state) => {
+          const roomMessages = state.messagesByRoom[activeRoom.id] ?? []
+          const updatedMessages = roomMessages.filter((msg) => msg.id !== tempId)
+          return {
+            messagesByRoom: {
+              ...state.messagesByRoom,
+              [activeRoom.id]: updatedMessages,
+            },
+          }
+        })
+        setMessageContent(contentToSend)
+        toast.error("Message failed to send. Draft restored.")
+      })
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
