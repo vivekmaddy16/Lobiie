@@ -807,14 +807,11 @@ export function WorkspaceShell({
                       <VideoIcon className="size-5" />
                     </button>
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button
-                          type="button"
-                          className="p-2.5 rounded-full text-zinc-400 hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer"
-                          title="Options"
-                        >
-                          <MoreVerticalIcon className="size-5" />
-                        </button>
+                      <DropdownMenuTrigger
+                        className="p-2.5 rounded-full text-zinc-400 hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer"
+                        title="Options"
+                      >
+                        <MoreVerticalIcon className="size-5" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-lg p-1">
                         <DropdownMenuItem
