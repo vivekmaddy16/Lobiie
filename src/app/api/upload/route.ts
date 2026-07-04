@@ -4,19 +4,27 @@ import { writeFile, mkdir } from "fs/promises"
 import { join } from "path"
 
 export async function POST(request: Request) {
+  console.log("=== API UPLOAD REQUEST RECEIVED ===")
   const session = await auth()
+  console.log("Session userId:", session.userId)
 
   if (!session.userId) {
+    console.log("API UPLOAD: Unauthorized (no session.userId)")
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 })
   }
 
   try {
+    console.log("Parsing form data...")
     const data = await request.formData()
+    console.log("Form data keys:", Array.from(data.keys()))
     const file: File | null = data.get("file") as unknown as File
 
     if (!file) {
+      console.log("API UPLOAD: No file uploaded in form data")
       return NextResponse.json({ error: "No file uploaded." }, { status: 400 })
     }
+
+    console.log("File name:", file.name, "File size:", file.size, "File type:", file.type)
 
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
@@ -31,7 +39,9 @@ export async function POST(request: Request) {
     const filename = `${uniqueSuffix}-${safeName}`
     const filePath = join(uploadDir, filename)
     
+    console.log("Writing file to:", filePath)
     await writeFile(filePath, buffer)
+    console.log("File written successfully!")
 
     const fileUrl = `/uploads/${filename}`
     return NextResponse.json({
@@ -39,10 +49,10 @@ export async function POST(request: Request) {
       fileType: file.type,
       fileName: file.name,
     })
-  } catch (error) {
-    console.error("Upload error:", error)
+  } catch (error: any) {
+    console.error("API UPLOAD ERROR:", error)
     return NextResponse.json(
-      { error: "Failed to upload file." },
+      { error: "Failed to upload file.", details: error?.message || String(error) },
       { status: 500 }
     )
   }
