@@ -1,36 +1,40 @@
 import { PrismaClient } from "@/generated/prisma"
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3"
-import path from "node:path"
+import { PrismaMariaDb } from "@prisma/adapter-mariadb"
 
 const globalForPrisma = globalThis as typeof globalThis & {
   prisma?: PrismaClient
 }
 
-function resolveSqlitePath(databaseUrl: string) {
-  if (databaseUrl === ":memory:" || databaseUrl === "file::memory:") {
-    return ":memory:"
+function parseConnectionString(url: string) {
+  try {
+    const parsed = new URL(url)
+    return {
+      host: parsed.hostname,
+      port: parsed.port ? parseInt(parsed.port, 10) : 3306,
+      user: parsed.username ? decodeURIComponent(parsed.username) : "root",
+      password: parsed.password ? decodeURIComponent(parsed.password) : undefined,
+      database: parsed.pathname.replace(/^\//, ""),
+    }
+  } catch (error) {
+    console.error("Failed to parse DATABASE_URL:", error)
+    return {}
   }
-
-  if (!databaseUrl.startsWith("file:")) {
-    throw new Error(
-      "DATABASE_URL must use a sqlite file: path when using the better-sqlite3 adapter."
-    )
-  }
-
-  const sqlitePath = databaseUrl.slice("file:".length)
-
-  if (path.isAbsolute(sqlitePath)) {
-    return sqlitePath
-  }
-
-  return path.join(/* turbopackIgnore: true */ process.cwd(), sqlitePath)
 }
 
 function createPrismaClient() {
-  const databaseUrl = process.env.DATABASE_URL ?? "file:./dev.db"
-  const adapter = new PrismaBetterSqlite3({
-    // Keep runtime access aligned with Prisma CLI/database config.
-    url: resolveSqlitePath(databaseUrl),
+  const connectionString = process.env.DATABASE_URL
+  if (!connectionString) {
+    throw new Error("DATABASE_URL is not set in environment variables.")
+  }
+
+  const config = parseConnectionString(connectionString)
+  const adapter = new PrismaMariaDb({
+    host: config.host || "localhost",
+    port: config.port || 3306,
+    user: config.user || "root",
+    password: config.password,
+    database: config.database,
+    connectionLimit: 10,
   })
 
   return new PrismaClient({ adapter })

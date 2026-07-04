@@ -1,6 +1,6 @@
 # 💬 Lobiie
 
-Lobii is a real-time community workspace platform built with **Next.js 16 (App Router)**, **Clerk**, **Socket.IO**, **Zustand**, **Prisma**, **SQLite**, **WebRTC**, and **Tailwind CSS**. 
+Lobii is a real-time community workspace platform built with **Next.js 16 (App Router)**, **Clerk**, **Socket.IO**, **Zustand**, **Prisma**, **MySQL**, **WebRTC**, and **Tailwind CSS**. 
 
 It provides a Discord/Slack-like unified workspace experience with real-time text chat, typing indicators, active presence, optimistic updates, and peer-to-peer browser voice and video huddles via WebRTC mesh connections.
 
@@ -14,7 +14,7 @@ It provides a Discord/Slack-like unified workspace experience with real-time tex
   - Easy member invitations through unique link invitation codes.
 
 - **💬 Real-Time Unified Chat Client**
-  - **Optimistic Message Pipeline**: Messages render instantly in the UI with a pending status. A background fetch persists them to the SQLite database via `/api/messages`. Upon success, the optimistic message is swapped with the DB payload and synchronized via Socket.IO. If saving fails, the draft is restored, and the user is alerted.
+  - **Optimistic Message Pipeline**: Messages render instantly in the UI with a pending status. A background fetch persists them to the MySQL database via `/api/messages`. Upon success, the optimistic message is swapped with the DB payload and synchronized via Socket.IO. If saving fails, the draft is restored, and the user is alerted.
   - **Typing Indicators**: Live visual feedback showing who is typing in the current channel and in the sidebar.
   - **⚽ Football Tactic Integration**: Paste/type tactical instructions containing words like `"midfield"` or `"creativity"` to auto-display inline tactical pitch diagrams (`tactic_board_green.png` and `tactic_board_white.png`).
   - **📁 Media & File Sharing**: Upload images, videos, audio, and documents locally using the paperclip button next to the input area. Uploads are stored in `public/uploads` via the `/api/upload` endpoint and rendered dynamically inline in the chat bubble based on their MIME type (supporting inline images, videos, audios, and document download cards).
@@ -61,7 +61,7 @@ Lobii utilizes a unified server setup that binds both the standard Next.js reque
 - **Auth**: [Clerk Next.js](https://clerk.com/)
 - **Real-time Server**: [Socket.IO](https://socket.io/)
 - **State Management**: [Zustand](https://zustand-demo.pmnd.rs/)
-- **ORM & DB**: [Prisma](https://www.prisma.io/) & [SQLite](https://www.sqlite.org/) (via `better-sqlite3`)
+- **ORM & DB**: [Prisma](https://www.prisma.io/) & [MySQL](https://www.mysql.com/)
 - **WebRTC**: Browser native mesh audio/video signaling
 - **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) & [shadcn/ui](https://ui.shadcn.com/)
 
@@ -71,7 +71,7 @@ Lobii utilizes a unified server setup that binds both the standard Next.js reque
 
 ### Prerequisites
 
-Ensure you have Node.js installed (LTS version recommended).
+Ensure you have Node.js installed (LTS version recommended) and a running MySQL database server.
 
 ### Local Setup
 
@@ -89,12 +89,12 @@ Ensure you have Node.js installed (LTS version recommended).
    ```env
    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_your_key_here
    CLERK_SECRET_KEY=sk_test_your_key_here
-   DATABASE_URL="file:./dev.db"
+   DATABASE_URL="mysql://root:password@localhost:3306/lobiie"
    NEXT_PUBLIC_APP_URL=http://localhost:3000
    ```
 
 3. **Database Migration**:
-   Run the following commands to initialize the local SQLite database and generate the Prisma Client:
+   Run the following commands to initialize the MySQL database schema and generate the Prisma Client:
    ```bash
    npm run db:push
    ```
@@ -116,6 +116,6 @@ Run these scripts inside the project directory:
 - **`npm run start`**: Runs the compiled production server.
 - **`npm run lint`**: Runs ESLint checks across workspace source files.
 - **`npm run db:generate`**: Explicitly regenerates the Prisma Client client files.
-- **`npm run db:push`**: Syncs the schema with the local SQLite file database without creating migrations (perfect for rapid prototyping).
+- **`npm run db:push`**: Syncs the schema with the MySQL database without creating migrations (perfect for rapid prototyping).
 - **`npm run db:migrate`**: Creates a new schema migration.
-- **`npm run db:studio`**: Opens a browser window for visual data editing inside the SQLite tables.
+- **`npm run db:studio`**: Opens a browser window for visual data editing inside the MySQL tables.
