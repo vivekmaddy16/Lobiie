@@ -15,6 +15,7 @@ import {
   UsersIcon,
   VideoIcon,
   VideoOffIcon,
+  PhoneOffIcon,
 } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -70,9 +71,11 @@ function MediaVideo({
 export function MediaStage({
   viewer,
   room,
+  onLeave,
 }: {
   viewer: Viewer
   room: WorkspaceRoom
+  onLeave?: () => void
 }) {
   const participants = useRoomStore((state) => state.participants)
   const connected = useRoomStore((state) => state.connected)
@@ -547,13 +550,14 @@ export function MediaStage({
               "Join the room, allow device permissions, and the peer connections will negotiate automatically."}
           </CardDescription>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           <Button
             type="button"
             variant={localMedia.audioEnabled ? "default" : "outline"}
             onClick={toggleAudio}
+            className="rounded-xl h-9"
           >
-            {localMedia.audioEnabled ? <MicIcon /> : <MicOffIcon />}
+            {localMedia.audioEnabled ? <MicIcon className="size-4 mr-1.5" /> : <MicOffIcon className="size-4 mr-1.5" />}
             {localMedia.audioEnabled ? "Mute" : "Unmute"}
           </Button>
           {room.kind === "VIDEO" ? (
@@ -561,15 +565,27 @@ export function MediaStage({
               type="button"
               variant={localMedia.videoEnabled ? "default" : "outline"}
               onClick={toggleVideo}
+              className="rounded-xl h-9"
             >
-              {localMedia.videoEnabled ? <VideoIcon /> : <VideoOffIcon />}
+              {localMedia.videoEnabled ? <VideoIcon className="size-4 mr-1.5" /> : <VideoOffIcon className="size-4 mr-1.5" />}
               {localMedia.videoEnabled ? "Camera on" : "Camera off"}
             </Button>
           ) : null}
+          {onLeave && (
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={onLeave}
+              className="rounded-xl h-9 bg-rose-600 hover:bg-rose-700 text-white font-medium shadow-xs"
+            >
+              <PhoneOffIcon className="size-4 mr-1.5" />
+              <span>Leave</span>
+            </Button>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid gap-4 xl:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4">
           <div className="rounded-[2rem] border bg-zinc-950 p-4 text-zinc-100">
             <div className="mb-3 flex items-center justify-between">
               <div>
@@ -587,14 +603,14 @@ export function MediaStage({
                 className="aspect-video w-full rounded-[1.5rem] bg-zinc-900 object-cover"
               />
             ) : (
-              <div className="flex aspect-video items-center justify-center rounded-[1.5rem] bg-zinc-900">
+              <div className="flex min-h-[180px] w-full items-center justify-center rounded-[1.5rem] bg-zinc-900 p-6">
                 <div className="text-center">
                   <Avatar size="lg" className="mx-auto mb-3">
                     <AvatarImage src={viewer.imageUrl ?? undefined} />
                     <AvatarFallback>{getInitials(viewer.name)}</AvatarFallback>
                   </Avatar>
                   <p className="font-medium">{room.kind === "VIDEO" ? "Camera unavailable" : "Audio only"}</p>
-                  <p className="mt-1 text-sm text-zinc-400">
+                  <p className="mt-1 text-xs text-zinc-400 max-w-[240px] mx-auto leading-normal">
                     {room.kind === "VIDEO"
                       ? "Grant camera access to show your local preview."
                       : "Your microphone stream will still be shared with peers."}
@@ -654,11 +670,11 @@ export function MediaStage({
                       className="aspect-video w-full rounded-[1.5rem] bg-zinc-900 object-cover"
                     />
                   ) : (
-                    <div className="flex aspect-video items-center justify-center rounded-[1.5rem] bg-zinc-900">
+                    <div className="flex min-h-[180px] w-full items-center justify-center rounded-[1.5rem] bg-zinc-900 p-6">
                       <div className="text-center">
                         <MicIcon className="mx-auto mb-3 size-8 text-zinc-300" />
                         <p className="font-medium">{participant.name} is live</p>
-                        <p className="mt-1 text-sm text-zinc-400">
+                        <p className="mt-1 text-xs text-zinc-400 max-w-[240px] mx-auto leading-normal">
                           Voice stream connected through WebRTC.
                         </p>
                       </div>

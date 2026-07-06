@@ -1163,7 +1163,17 @@ export function WorkspaceShell({
                 {/* WebRTC Video Call / Huddle Stage Column */}
                 {activeRoom.kind !== "CHAT" && (
                   <div className="w-full xl:w-[360px] xl:h-full shrink-0 border-b xl:border-b-0 xl:border-l border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/20 p-4 overflow-y-auto custom-scrollbar xl:order-2">
-                    <MediaStage key={activeRoom.id} viewer={viewer} room={activeRoom} />
+                    <MediaStage
+                      key={activeRoom.id}
+                      viewer={viewer}
+                      room={activeRoom}
+                      onLeave={() => {
+                        const chatRoom = currentCommunity.rooms.find((r) => r.kind === "CHAT")
+                        if (chatRoom) {
+                          setActiveRoom(chatRoom.id)
+                        }
+                      }}
+                    />
                   </div>
                 )}
               </div>
