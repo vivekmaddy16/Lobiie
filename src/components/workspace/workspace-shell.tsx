@@ -62,6 +62,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
+import { useChatPolling } from "@/hooks/use-chat-polling"
 import { useLobbySocket } from "@/hooks/use-lobby-socket"
 import { useRoomStore } from "@/hooks/use-room-store"
 import { getSocket } from "@/lib/socket-client"
@@ -295,6 +296,9 @@ export function WorkspaceShell({
       role: currentCommunity.role,
     },
   })
+
+  // Polling fallback for Vercel (no WebSocket support)
+  useChatPolling(activeRoom?.id ?? null)
 
   const handleTextChange = (val: string) => {
     setMessageContent(val)
