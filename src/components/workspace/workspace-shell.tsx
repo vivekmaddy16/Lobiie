@@ -152,7 +152,8 @@ export function WorkspaceShell({
       })
 
       if (!response.ok) {
-        throw new Error("Failed to upload file")
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.details || errorData.error || "Failed to upload file")
       }
 
       const data = await response.json()
@@ -162,9 +163,9 @@ export function WorkspaceShell({
         fileName: data.fileName,
       })
       toast.success("File attached successfully!")
-    } catch (err) {
+    } catch (err: any) {
       console.error(err)
-      toast.error("Failed to upload file.")
+      toast.error(err.message || "Failed to upload file.")
     } finally {
       setUploading(false)
       if (fileInputRef.current) {
