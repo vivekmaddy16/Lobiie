@@ -1,0 +1,12 @@
+{
+  "name": "lobiie-socket-server",
+  "version": "1.0.0",
+  "description": "Standalone Socket.io signaling and presence server for Lobiie",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "socket.io": "^4.8.3"
+  }
+}

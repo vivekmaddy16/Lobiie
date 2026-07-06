@@ -35,7 +35,9 @@ import {
   InfoIcon,
   LinkIcon,
   BellOffIcon,
-  LoaderCircleIcon
+  LoaderCircleIcon,
+  ChevronLeftIcon,
+  MenuIcon
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -125,6 +127,7 @@ export function WorkspaceShell({
   const typingUsers = useRoomStore((state) => state.typingUsers)
 
   const [activeTab, setActiveTab] = useState<"rooms" | "communities" | "members">("rooms")
+  const [showSidebarMobile, setShowSidebarMobile] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [messageContent, setMessageContent] = useState("")
   const [sendingMessage, setSendingMessage] = useState(false)
@@ -462,7 +465,10 @@ export function WorkspaceShell({
     <div className="min-h-screen bg-[#F3F4F6] dark:bg-zinc-950 p-4 md:p-6 lg:p-8 flex items-center justify-center">
       <div className="w-full max-w-7xl h-[calc(100vh-4rem)] min-h-[600px] flex gap-4 overflow-hidden">
         {/* ── Left Sidebar (Unified Navigation Pane) ── */}
-        <aside className="w-[320px] md:w-[350px] lg:w-[380px] shrink-0 h-full flex flex-col bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.03)] overflow-hidden">
+        <aside className={cn(
+          "w-full lg:w-[350px] xl:w-[380px] shrink-0 h-full flex flex-col bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.03)] overflow-hidden",
+          showSidebarMobile ? "flex" : "hidden lg:flex"
+        )}>
           {/* Sidebar Header */}
           <div className="p-5 flex flex-col gap-4 border-b border-zinc-100 dark:border-zinc-800">
             {/* User details row */}
@@ -595,7 +601,10 @@ export function WorkspaceShell({
                               ? "bg-white dark:bg-zinc-800 border-zinc-200/50 dark:border-zinc-700/80 shadow-md scale-[1.01] relative z-10"
                               : "bg-white/50 border-zinc-100 hover:border-zinc-200 hover:bg-white dark:bg-zinc-900/40 dark:border-zinc-800 dark:hover:bg-zinc-900/60"
                           )}
-                          onClick={() => setActiveRoom(room.id)}
+                          onClick={() => {
+                            setActiveRoom(room.id)
+                            setShowSidebarMobile(false)
+                          }}
                         >
                           <div className="flex items-center gap-3 min-w-0 flex-1">
                             <span className={cn("rounded-full p-2.5 shrink-0", getRoomGradient(room.kind))}>
@@ -655,7 +664,10 @@ export function WorkspaceShell({
                               ? "bg-white dark:bg-zinc-800 border-zinc-200/50 dark:border-zinc-700/80 shadow-md scale-[1.01] relative z-10"
                               : "bg-white/50 border-zinc-100 hover:border-zinc-200 hover:bg-white dark:bg-zinc-900/40 dark:border-zinc-800 dark:hover:bg-zinc-900/60"
                           )}
-                          onClick={() => setActiveRoom(room.id)}
+                          onClick={() => {
+                            setActiveRoom(room.id)
+                            setShowSidebarMobile(false)
+                          }}
                         >
                           <div className="flex items-center gap-3 min-w-0 flex-1">
                             <span className={cn("rounded-full p-2.5 shrink-0", getRoomGradient(room.kind))}>
@@ -791,12 +803,23 @@ export function WorkspaceShell({
         </aside>
 
         {/* ── Right Column (Unified Chat Client + Media Stage) ── */}
-        <main className="flex-grow h-full flex flex-col bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.03)] overflow-hidden">
+        <main className={cn(
+          "flex-grow h-full flex flex-col bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.03)] overflow-hidden",
+          !showSidebarMobile ? "flex" : "hidden lg:flex"
+        )}>
           {activeRoom ? (
             <>
               {/* Main Panel Header */}
               <header className="p-5 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between bg-white/50 dark:bg-zinc-900/50 backdrop-blur z-20">
                 <div className="flex items-center gap-3 min-w-0">
+                  <button
+                    type="button"
+                    onClick={() => setShowSidebarMobile(true)}
+                    className="lg:hidden p-2 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 hover:text-foreground shrink-0 transition cursor-pointer"
+                    title="Back to sidebar"
+                  >
+                    <ChevronLeftIcon className="size-5" />
+                  </button>
                   <span className={cn("rounded-full p-2.5 shrink-0", getRoomGradient(activeRoom.kind))}>
                     {(() => {
                       const Icon = roomIcon(activeRoom.kind)
@@ -913,9 +936,9 @@ export function WorkspaceShell({
               </header>
 
               {/* Main Panel Content Split (Chat & WebRTC Stage) */}
-              <div className="flex-1 flex overflow-hidden">
+              <div className="flex-1 flex flex-col xl:flex-row overflow-hidden">
                 {/* Chat Panel Column */}
-                <div className="flex-1 flex flex-col h-full overflow-hidden">
+                <div className="flex-1 flex flex-col h-full overflow-hidden xl:order-1">
                   {/* Messages Feed */}
                   <div className="flex-grow overflow-y-auto p-5 space-y-4 custom-scrollbar chat-pattern bg-zinc-50/10 dark:bg-zinc-950/5">
                     <div className="flex justify-center my-2">
@@ -1139,7 +1162,7 @@ export function WorkspaceShell({
 
                 {/* WebRTC Video Call / Huddle Stage Column */}
                 {activeRoom.kind !== "CHAT" && (
-                  <div className="w-[320px] md:w-[360px] lg:w-[400px] shrink-0 border-l border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/20 p-4 overflow-y-auto custom-scrollbar">
+                  <div className="w-full xl:w-[360px] xl:h-full shrink-0 border-b xl:border-b-0 xl:border-l border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/20 p-4 overflow-y-auto custom-scrollbar xl:order-2">
                     <MediaStage key={activeRoom.id} viewer={viewer} room={activeRoom} />
                   </div>
                 )}
