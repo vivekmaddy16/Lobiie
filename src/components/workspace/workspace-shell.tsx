@@ -958,9 +958,9 @@ export function WorkspaceShell({
               </header>
 
               {/* Main Panel Content Split (Chat & WebRTC Stage) */}
-              <div className="flex-1 flex flex-col xl:flex-row overflow-hidden">
+              <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
                 {/* Chat Panel Column */}
-                <div className="flex-1 flex flex-col h-full overflow-hidden xl:order-1">
+                <div className="flex-1 flex flex-col h-full overflow-hidden md:order-1">
                   {/* Messages Feed */}
                   <div className="flex-grow overflow-y-auto p-5 space-y-4 custom-scrollbar chat-pattern bg-zinc-50/10 dark:bg-zinc-950/5">
                     <div className="flex justify-center my-2">
@@ -1184,7 +1184,7 @@ export function WorkspaceShell({
 
                 {/* WebRTC Video Call / Huddle Stage Column */}
                 {activeRoom.kind !== "CHAT" && (
-                  <div className="w-full max-h-[50vh] xl:max-h-none xl:w-[360px] xl:h-full shrink-0 border-b xl:border-b-0 xl:border-l border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/20 p-4 overflow-y-auto custom-scrollbar xl:order-2">
+                  <div className="w-full max-h-[50vh] md:max-h-none md:w-[340px] lg:w-[360px] md:h-full shrink-0 border-b md:border-b-0 md:border-l border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/20 p-4 overflow-y-auto custom-scrollbar md:order-2">
                     <MediaStage
                       key={activeRoom.id}
                       viewer={viewer}
