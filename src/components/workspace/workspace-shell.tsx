@@ -957,10 +957,27 @@ export function WorkspaceShell({
                 </div>
               </header>
 
-              {/* Main Panel Content Split (Chat & WebRTC Stage) */}
-              <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-                {/* Chat Panel Column */}
-                <div className="flex-1 flex flex-col h-full overflow-hidden md:order-1">
+              {/* Main Panel Content Split — Video on top, Chat below (Google Meet style) */}
+              <div className="flex-1 flex flex-col overflow-hidden">
+                {/* WebRTC Video Call / Huddle Stage — Top */}
+                {activeRoom.kind !== "CHAT" && (
+                  <div className="w-full shrink-0 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/20 p-3 sm:p-4 overflow-y-auto custom-scrollbar" style={{ maxHeight: '45vh' }}>
+                    <MediaStage
+                      key={activeRoom.id}
+                      viewer={viewer}
+                      room={activeRoom}
+                      onLeave={() => {
+                        const chatRoom = currentCommunity.rooms.find((r) => r.kind === "CHAT")
+                        if (chatRoom) {
+                          setActiveRoom(chatRoom.id)
+                        }
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* Chat Panel — Bottom */}
+                <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
                   {/* Messages Feed */}
                   <div className="flex-grow overflow-y-auto p-5 space-y-4 custom-scrollbar chat-pattern bg-zinc-50/10 dark:bg-zinc-950/5">
                     <div className="flex justify-center my-2">
@@ -984,7 +1001,6 @@ export function WorkspaceShell({
                     ) : (
                       activeMessages.map((message) => {
                         const isViewer = message.author.id === viewer.id
-                        // Detect soccer tactic conversation to display inline tactic diagram mockups
                         const hasTactics =
                           message.content.toLowerCase().includes("midfield") ||
                           message.content.toLowerCase().includes("creativity")
@@ -1100,7 +1116,6 @@ export function WorkspaceShell({
                   <div className="p-4 border-t border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900">
                     <form className="space-y-3" onSubmit={handleSendMessage}>
                       <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-2 focus-within:border-primary/50 transition">
-                        {/* File Attachment Preview */}
                         {attachedFile && (
                           <div className="mb-2 p-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-3 max-w-sm shadow-xs">
                             <div className="flex items-center gap-2 min-w-0">
@@ -1146,7 +1161,6 @@ export function WorkspaceShell({
                         />
                         <div className="flex items-center justify-between gap-3 px-2 pt-2 border-t border-zinc-200/50 dark:border-zinc-800/50 mt-1">
                           <div className="flex items-center gap-1.5">
-                            {/* Hidden File Input */}
                             <input
                               type="file"
                               ref={fileInputRef}
@@ -1163,7 +1177,7 @@ export function WorkspaceShell({
                               <PaperclipIcon className="size-4.5" />
                             </button>
 
-                            <span className="text-[10px] text-muted-foreground">
+                            <span className="text-[10px] text-muted-foreground hidden sm:inline">
                               Press Enter to send · Shift+Enter for newline
                             </span>
                           </div>
@@ -1181,23 +1195,7 @@ export function WorkspaceShell({
                     </form>
                   </div>
                 </div>
-
-                {/* WebRTC Video Call / Huddle Stage Column */}
-                {activeRoom.kind !== "CHAT" && (
-                  <div className="w-full max-h-[50vh] md:max-h-none md:w-[340px] lg:w-[360px] md:h-full shrink-0 border-b md:border-b-0 md:border-l border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/20 p-4 overflow-y-auto custom-scrollbar md:order-2">
-                    <MediaStage
-                      key={activeRoom.id}
-                      viewer={viewer}
-                      room={activeRoom}
-                      onLeave={() => {
-                        const chatRoom = currentCommunity.rooms.find((r) => r.kind === "CHAT")
-                        if (chatRoom) {
-                          setActiveRoom(chatRoom.id)
-                        }
-                      }}
-                    />
-                  </div>
-                )}
+              </div>
               </div>
             </>
           ) : (
