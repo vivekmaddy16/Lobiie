@@ -533,123 +533,124 @@ export function MediaStage({
     )
   }
 
+  // Calculate grid columns based on total tile count
+  const totalTiles = 1 + remoteEntries.length // local + remotes
+  const gridClass =
+    totalTiles <= 1
+      ? "grid-cols-1"
+      : totalTiles <= 4
+        ? "grid-cols-2"
+        : totalTiles <= 9
+          ? "grid-cols-2 sm:grid-cols-3"
+          : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"
+
   return (
-    <Card className="bg-card/75 backdrop-blur flex flex-col relative overflow-hidden">
-      {/* Compact Header */}
-      <CardHeader className="px-3 py-2.5 sm:p-4 border-b border-zinc-100 dark:border-zinc-800/60">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <Badge variant="outline" className="text-[10px] py-0 px-1.5 shrink-0">
-              {room.kind === "VIDEO" ? "Video" : "Voice"}
-            </Badge>
-            <span className="text-sm font-bold truncate">
-              {room.kind === "VIDEO" ? "Browser Call" : "Audio Huddle"}
-            </span>
-          </div>
-          <Badge variant={connected ? "default" : "outline"} className="text-[9px] py-0 px-1.5 rounded-full font-medium shrink-0 flex items-center gap-1">
-            <span className={cn("size-1.5 rounded-full", connected ? "bg-emerald-500" : "bg-amber-500 animate-pulse")} />
-            {connected ? "Ready" : "..."}
+    <div className="flex flex-col h-full relative bg-zinc-900 rounded-2xl overflow-hidden">
+      {/* Compact top bar */}
+      <div className="flex items-center justify-between px-3 py-2 bg-zinc-900/95 border-b border-zinc-800/50 shrink-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <Badge variant="outline" className="text-[9px] py-0 px-1.5 shrink-0 border-zinc-700 text-zinc-400">
+            {room.kind === "VIDEO" ? "Video" : "Voice"}
           </Badge>
+          <span className="text-xs font-semibold text-zinc-300 truncate">
+            {room.kind === "VIDEO" ? "Browser Call" : "Audio Huddle"}
+          </span>
         </div>
-        {mediaError && (
-          <p className="text-[10px] text-rose-500 mt-1 leading-snug">{mediaError}</p>
-        )}
-      </CardHeader>
-
-      <CardContent className="flex-1 p-2.5 sm:p-3 pb-16 overflow-y-auto custom-scrollbar space-y-2.5">
-        {/* Local participant — compact */}
-        <div className="rounded-xl border border-zinc-200/50 bg-zinc-950 p-2.5 sm:p-3 text-zinc-100 dark:border-zinc-800/50">
-          <div className="mb-1.5 flex items-center justify-between">
-            <div className="flex items-center gap-2 min-w-0">
-              <Avatar size="sm" className="size-6">
-                <AvatarImage src={viewer.imageUrl ?? undefined} />
-                <AvatarFallback className="text-[9px]">{getInitials(viewer.name)}</AvatarFallback>
-              </Avatar>
-              <p className="text-[11px] font-semibold text-zinc-200 truncate">You</p>
-            </div>
-            <Badge variant="secondary" className="text-[8px] py-0 px-1 bg-zinc-800/80 text-zinc-400 border-0">
-              Local
-            </Badge>
-          </div>
-          {room.kind === "VIDEO" && localStream ? (
-            <MediaVideo
-              muted
-              stream={localStream}
-              className="aspect-video w-full rounded-lg bg-zinc-900 object-cover"
-            />
-          ) : (
-            <div className="flex min-h-[80px] sm:min-h-[100px] w-full items-center justify-center rounded-lg bg-zinc-900/60 p-3 border border-zinc-800/40">
-              <div className="text-center">
-                <MicIcon className="mx-auto mb-1 size-5 text-zinc-500" />
-                <p className="text-[10px] font-medium text-zinc-400">
-                  {room.kind === "VIDEO" ? "Camera off" : "Audio only"}
-                </p>
-              </div>
-            </div>
-          )}
+        <div className="flex items-center gap-1.5">
+          <span className={cn("size-1.5 rounded-full", connected ? "bg-emerald-500" : "bg-amber-500 animate-pulse")} />
+          <span className="text-[9px] text-zinc-500">{connected ? "Connected" : "..."}</span>
         </div>
+      </div>
 
-        {/* Remote participants — compact */}
-        <div className="space-y-2.5">
-          {remoteEntries.length === 0 ? (
-            <div className="flex min-h-[60px] sm:min-h-[80px] items-center justify-center rounded-xl border border-dashed border-zinc-200 bg-background/50 p-3 text-center dark:border-zinc-800">
-              <div>
-                <p className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-400">Waiting for teammates</p>
-                <p className="mt-0.5 text-[9px] text-muted-foreground leading-normal">
-                  Invite members to join the call.
-                </p>
-              </div>
-            </div>
-          ) : (
-            remoteEntries.map(({ participant, stream }) => (
-              <div
-                key={participant.socketId}
-                className="rounded-xl border border-zinc-200/50 bg-zinc-950 p-2.5 sm:p-3 text-zinc-100 dark:border-zinc-800/50"
-              >
-                <div className="mb-1.5 flex items-center justify-between">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Avatar size="sm" className="size-6">
-                      <AvatarImage src={participant.imageUrl ?? undefined} />
-                      <AvatarFallback className="text-[9px]">{getInitials(participant.name)}</AvatarFallback>
-                    </Avatar>
-                    <p className="text-[11px] font-semibold text-zinc-200 truncate">{participant.name}</p>
-                  </div>
-                  <div className="flex items-center gap-1 text-zinc-400">
-                    {participant.audioEnabled ? (
-                      <MicIcon className="size-3" />
-                    ) : (
-                      <MicOffIcon className="size-3 text-rose-500" />
-                    )}
-                    {room.kind === "VIDEO" ? (
-                      participant.videoEnabled ? (
-                        <VideoIcon className="size-3" />
-                      ) : (
-                        <VideoOffIcon className="size-3 text-rose-500" />
-                      )
-                    ) : null}
+      {mediaError && (
+        <div className="px-3 py-1.5 bg-rose-950/40 border-b border-rose-800/30">
+          <p className="text-[10px] text-rose-400 leading-snug">{mediaError}</p>
+        </div>
+      )}
+
+      {/* Google Meet-style participant grid */}
+      <div className="flex-1 p-2 sm:p-3 pb-14 overflow-y-auto custom-scrollbar">
+        <div className={cn("grid gap-2 sm:gap-2.5 h-full", gridClass)}>
+          {/* Local tile */}
+          <div className="relative rounded-xl bg-zinc-800 overflow-hidden flex flex-col">
+            {room.kind === "VIDEO" && localStream ? (
+              <MediaVideo
+                muted
+                stream={localStream}
+                className="w-full h-full min-h-[100px] sm:min-h-[120px] object-cover"
+              />
+            ) : (
+              <div className="flex-1 flex items-center justify-center min-h-[100px] sm:min-h-[120px] bg-zinc-800">
+                <div className="text-center">
+                  <div className="mx-auto size-10 sm:size-12 rounded-full bg-zinc-600 flex items-center justify-center">
+                    <span className="text-sm sm:text-base font-semibold text-zinc-300">
+                      {getInitials(viewer.name)}
+                    </span>
                   </div>
                 </div>
-                {room.kind === "VIDEO" ? (
-                  <MediaVideo
-                    stream={stream}
-                    className="aspect-video w-full rounded-lg bg-zinc-900 object-cover"
-                  />
-                ) : (
-                  <div className="flex min-h-[60px] w-full items-center justify-center rounded-lg bg-zinc-900/60 p-2 border border-zinc-800/40">
-                    <div className="text-center">
-                      <MicIcon className="mx-auto mb-1 size-4 text-zinc-500" />
-                      <p className="text-[10px] font-medium text-zinc-400">{participant.name} is live</p>
+              </div>
+            )}
+            {/* Name + mic overlay */}
+            <div className="absolute bottom-0 left-0 right-0 px-2 py-1.5 bg-gradient-to-t from-black/70 to-transparent flex items-center justify-between">
+              <span className="text-[10px] sm:text-[11px] font-medium text-white truncate">You</span>
+              <span className="text-zinc-400">
+                {localMedia.audioEnabled ? <MicIcon className="size-3" /> : <MicOffIcon className="size-3 text-rose-500" />}
+              </span>
+            </div>
+          </div>
+
+          {/* Remote tiles */}
+          {remoteEntries.map(({ participant, stream }) => (
+            <div key={participant.socketId} className="relative rounded-xl bg-zinc-800 overflow-hidden flex flex-col">
+              {room.kind === "VIDEO" ? (
+                <MediaVideo
+                  stream={stream}
+                  className="w-full h-full min-h-[100px] sm:min-h-[120px] object-cover"
+                />
+              ) : (
+                <div className="flex-1 flex items-center justify-center min-h-[100px] sm:min-h-[120px] bg-zinc-800">
+                  <div className="text-center">
+                    <div className="mx-auto size-10 sm:size-12 rounded-full bg-zinc-600 flex items-center justify-center">
+                      <span className="text-sm sm:text-base font-semibold text-zinc-300">
+                        {getInitials(participant.name)}
+                      </span>
                     </div>
                   </div>
-                )}
+                </div>
+              )}
+              {/* Name + mic overlay */}
+              <div className="absolute bottom-0 left-0 right-0 px-2 py-1.5 bg-gradient-to-t from-black/70 to-transparent flex items-center justify-between">
+                <span className="text-[10px] sm:text-[11px] font-medium text-white truncate">{participant.name}</span>
+                <div className="flex items-center gap-1">
+                  {participant.audioEnabled ? (
+                    <MicIcon className="size-3 text-zinc-400" />
+                  ) : (
+                    <MicOffIcon className="size-3 text-rose-500" />
+                  )}
+                  {room.kind === "VIDEO" && !participant.videoEnabled && (
+                    <VideoOffIcon className="size-3 text-rose-500" />
+                  )}
+                </div>
               </div>
-            ))
+            </div>
+          ))}
+
+          {/* Empty placeholder tiles when alone */}
+          {remoteEntries.length === 0 && (
+            <div className="rounded-xl border border-dashed border-zinc-700 bg-zinc-800/50 flex items-center justify-center min-h-[100px] sm:min-h-[120px]">
+              <div className="text-center px-3">
+                <div className="mx-auto size-10 sm:size-12 rounded-full bg-zinc-700/50 flex items-center justify-center mb-1.5">
+                  <UsersIcon className="size-4 sm:size-5 text-zinc-500" />
+                </div>
+                <p className="text-[10px] text-zinc-500 font-medium">Waiting...</p>
+              </div>
+            </div>
           )}
         </div>
-      </CardContent>
+      </div>
 
-      {/* Compact Floating Call Control Bar */}
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center justify-center gap-2 bg-zinc-900/90 dark:bg-zinc-950/95 backdrop-blur-md px-3 py-2 rounded-full border border-zinc-200/20 dark:border-zinc-800/80 shadow-xl z-30">
+      {/* Floating Call Controls */}
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center justify-center gap-2 bg-zinc-800/90 backdrop-blur-md px-3 py-2 rounded-full border border-zinc-700/50 shadow-xl z-30">
         <Button
           type="button"
           size="icon"
@@ -687,6 +688,6 @@ export function MediaStage({
           </Button>
         )}
       </div>
-    </Card>
+    </div>
   )
 }
