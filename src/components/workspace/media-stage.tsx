@@ -569,12 +569,12 @@ export function MediaStage({
       )}
 
       {/* Google Meet-style participant grid */}
-      <div className="flex-1 p-2 sm:p-3 pb-14 overflow-y-auto custom-scrollbar">
-        <div className={cn("grid gap-2 sm:gap-2.5 h-full", gridClass)}>
+      <div className="flex-1 p-2 sm:p-3 pb-14 overflow-y-auto custom-scrollbar flex items-center justify-center">
+        <div className={cn("grid gap-2 sm:gap-2.5 w-full max-w-4xl mx-auto", gridClass)}>
           {/* Local tile */}
           <div
             className={cn(
-              "relative rounded-xl bg-zinc-800 overflow-hidden flex flex-col transition-all duration-300 border-2",
+              "relative rounded-xl bg-zinc-800 overflow-hidden flex flex-col transition-all duration-300 border-2 aspect-video w-full max-w-xl mx-auto",
               localMedia.audioEnabled
                 ? "border-yellow-400 shadow-md shadow-yellow-400/10"
                 : "border-transparent"
@@ -584,10 +584,10 @@ export function MediaStage({
               <MediaVideo
                 muted
                 stream={localStream}
-                className="w-full h-full min-h-[100px] sm:min-h-[120px] object-cover"
+                className="w-full h-full object-cover"
               />
             ) : (
-              <div className="flex-grow flex items-center justify-center min-h-[100px] sm:min-h-[120px] bg-zinc-800">
+              <div className="flex-grow flex items-center justify-center bg-zinc-800">
                 <div className="text-center">
                   <div className="mx-auto size-12 sm:size-14 rounded-full bg-zinc-700 flex items-center justify-center shadow-inner">
                     <span className="text-sm sm:text-base font-semibold text-zinc-200">
@@ -623,7 +623,7 @@ export function MediaStage({
             <div
               key={participant.socketId}
               className={cn(
-                "relative rounded-xl bg-zinc-800 overflow-hidden flex flex-col transition-all duration-300 border-2",
+                "relative rounded-xl bg-zinc-800 overflow-hidden flex flex-col transition-all duration-300 border-2 aspect-video w-full max-w-xl mx-auto",
                 participant.audioEnabled
                   ? "border-yellow-400 shadow-md shadow-yellow-400/10"
                   : "border-transparent"
@@ -632,10 +632,10 @@ export function MediaStage({
               {room.kind === "VIDEO" ? (
                 <MediaVideo
                   stream={stream}
-                  className="w-full h-full min-h-[100px] sm:min-h-[120px] object-cover"
+                  className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="flex-grow flex items-center justify-center min-h-[100px] sm:min-h-[120px] bg-zinc-800">
+                <div className="flex-grow flex items-center justify-center bg-zinc-800">
                   <div className="text-center">
                     <div className="mx-auto size-12 sm:size-14 rounded-full bg-zinc-700 flex items-center justify-center shadow-inner">
                       <span className="text-sm sm:text-base font-semibold text-zinc-200">
@@ -674,7 +674,7 @@ export function MediaStage({
 
           {/* Empty placeholder tiles when alone */}
           {remoteEntries.length === 0 && (
-            <div className="rounded-xl border border-dashed border-zinc-700 bg-zinc-800/50 flex items-center justify-center min-h-[100px] sm:min-h-[120px]">
+            <div className="rounded-xl border border-dashed border-zinc-700 bg-zinc-800/50 flex items-center justify-center aspect-video w-full max-w-xl mx-auto">
               <div className="text-center px-3">
                 <div className="mx-auto size-10 sm:size-12 rounded-full bg-zinc-700/50 flex items-center justify-center mb-1.5">
                   <UsersIcon className="size-4 sm:size-5 text-zinc-500" />
