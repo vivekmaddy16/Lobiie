@@ -140,6 +140,7 @@ export function WorkspaceShell({
   } | null>(null)
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const [showHuddleChat, setShowHuddleChat] = useState(false)
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -262,7 +263,11 @@ export function WorkspaceShell({
     Promise.resolve().then(() => {
       setIsTypingLocal(false)
     })
-  }, [activeRoomId])
+    const targetRoom = currentCommunity.rooms.find((room) => room.id === activeRoomId)
+    if (targetRoom && targetRoom.kind !== "CHAT") {
+      setShowHuddleChat(false)
+    }
+  }, [activeRoomId, currentCommunity])
 
   useEffect(() => {
     startTransition(() => {
@@ -961,11 +966,20 @@ export function WorkspaceShell({
               <div className="flex-1 flex flex-col overflow-hidden">
                 {/* WebRTC Video Call / Huddle Stage — Top */}
                 {activeRoom.kind !== "CHAT" && (
-                  <div className="w-full shrink-0 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/20 p-3 sm:p-4 overflow-y-auto custom-scrollbar" style={{ maxHeight: '45vh' }}>
+                  <div
+                    className={cn(
+                      "w-full border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/20 p-3 sm:p-4 overflow-y-auto custom-scrollbar transition-all duration-305",
+                      showHuddleChat
+                        ? "shrink-0 border-b max-h-[45vh]"
+                        : "flex-1 min-h-0"
+                    )}
+                  >
                     <MediaStage
                       key={activeRoom.id}
                       viewer={viewer}
                       room={activeRoom}
+                      showChat={showHuddleChat}
+                      onToggleChat={() => setShowHuddleChat(!showHuddleChat)}
                       onLeave={() => {
                         const chatRoom = currentCommunity.rooms.find((r) => r.kind === "CHAT")
                         if (chatRoom) {
@@ -977,7 +991,8 @@ export function WorkspaceShell({
                 )}
 
                 {/* Chat Panel — Bottom */}
-                <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+                {(activeRoom.kind === "CHAT" || showHuddleChat) && (
+                  <div className="flex-grow flex-1 flex flex-col min-h-0 overflow-hidden">
                   {/* Messages Feed */}
                   <div className="flex-grow overflow-y-auto p-5 space-y-4 custom-scrollbar chat-pattern bg-zinc-50/10 dark:bg-zinc-950/5">
                     <div className="flex justify-center my-2">
@@ -1194,7 +1209,7 @@ export function WorkspaceShell({
                       </div>
                     </form>
                   </div>
-                </div>
+                )}
               </div>
             </>
           ) : (

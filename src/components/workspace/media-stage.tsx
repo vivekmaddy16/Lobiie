@@ -16,6 +16,7 @@ import {
   VideoIcon,
   VideoOffIcon,
   PhoneOffIcon,
+  MessageSquareIcon,
 } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -72,10 +73,14 @@ export function MediaStage({
   viewer,
   room,
   onLeave,
+  showChat,
+  onToggleChat,
 }: {
   viewer: Viewer
   room: WorkspaceRoom
   onLeave?: () => void
+  showChat?: boolean
+  onToggleChat?: () => void
 }) {
   const participants = useRoomStore((state) => state.participants)
   const connected = useRoomStore((state) => state.connected)
@@ -714,6 +719,19 @@ export function MediaStage({
             title={localMedia.videoEnabled ? "Camera Off" : "Camera On"}
           >
             {localMedia.videoEnabled ? <VideoIcon className="size-3.5" /> : <VideoOffIcon className="size-3.5 text-rose-500" />}
+          </Button>
+        )}
+
+        {onToggleChat && (
+          <Button
+            type="button"
+            size="icon"
+            variant={showChat ? "secondary" : "outline"}
+            onClick={onToggleChat}
+            className="rounded-full size-8 flex items-center justify-center cursor-pointer border-zinc-700/50"
+            title={showChat ? "Hide Chat" : "Show Chat"}
+          >
+            <MessageSquareIcon className={cn("size-3.5", showChat ? "text-blue-500" : "text-zinc-300")} />
           </Button>
         )}
 
