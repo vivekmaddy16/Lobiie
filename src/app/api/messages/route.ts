@@ -101,3 +101,22 @@ export async function POST(request: Request) {
     )
   }
 }
+
+export async function DELETE(request: Request) {
+  const session = await auth()
+
+  if (!session.userId) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 })
+  }
+
+  try {
+    const result = await db.message.deleteMany({})
+    return NextResponse.json({ success: true, count: result.count })
+  } catch (error) {
+    console.error("Error clearing messages:", error)
+    return NextResponse.json(
+      { error: "Unable to clear messages." },
+      { status: 500 }
+    )
+  }
+}

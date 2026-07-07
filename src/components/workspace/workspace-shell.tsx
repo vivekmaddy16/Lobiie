@@ -37,7 +37,8 @@ import {
   BellOffIcon,
   LoaderCircleIcon,
   ChevronLeftIcon,
-  MenuIcon
+  MenuIcon,
+  Trash2Icon
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -242,6 +243,28 @@ export function WorkspaceShell({
       toast.error(error instanceof Error ? error.message : "Failed to start call.")
     } finally {
       setCreatingCallRoom(false)
+    }
+  }
+
+  const [clearingChat, setClearingChat] = useState(false)
+
+  const handleClearChat = async () => {
+    if (!confirm("Are you sure you want to delete all chat history? This cannot be undone.")) {
+      return
+    }
+    setClearingChat(true)
+    try {
+      const response = await fetch("/api/messages", {
+        method: "DELETE",
+      })
+      const payload = await response.json()
+      if (!response.ok) throw new Error(payload.error ?? "Failed to clear chat history.")
+      toast.success("All chat history deleted successfully!")
+      router.refresh()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to clear chat history.")
+    } finally {
+      setClearingChat(false)
     }
   }
 
@@ -944,6 +967,15 @@ export function WorkspaceShell({
                       >
                         <BellOffIcon className="size-4 text-muted-foreground" />
                         <span>Mute Notifications</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator className="my-1 border-t border-zinc-100 dark:border-zinc-800" />
+                      <DropdownMenuItem
+                        onClick={handleClearChat}
+                        disabled={clearingChat}
+                        className="flex items-center gap-2 px-2.5 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg cursor-pointer font-semibold"
+                      >
+                        <Trash2Icon className="size-4 text-red-500" />
+                        <span>Clear Chat History</span>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
