@@ -574,11 +574,12 @@ export function MediaStage({
           {/* Local tile */}
           <div
             className={cn(
-              "relative rounded-xl bg-zinc-800 overflow-hidden flex flex-col transition-all duration-300 border-2 aspect-video w-full max-w-xl mx-auto",
+              "relative rounded-xl bg-zinc-800 overflow-hidden flex flex-col transition-all duration-300 border-2 w-full mx-auto",
               localMedia.audioEnabled
                 ? "border-yellow-400 shadow-md shadow-yellow-400/10"
                 : "border-transparent"
             )}
+            style={{ aspectRatio: '16/9', maxWidth: '640px' }}
           >
             {room.kind === "VIDEO" && localStream ? (
               <MediaVideo
@@ -623,11 +624,12 @@ export function MediaStage({
             <div
               key={participant.socketId}
               className={cn(
-                "relative rounded-xl bg-zinc-800 overflow-hidden flex flex-col transition-all duration-300 border-2 aspect-video w-full max-w-xl mx-auto",
+                "relative rounded-xl bg-zinc-800 overflow-hidden flex flex-col transition-all duration-300 border-2 w-full mx-auto",
                 participant.audioEnabled
                   ? "border-yellow-400 shadow-md shadow-yellow-400/10"
                   : "border-transparent"
               )}
+              style={{ aspectRatio: '16/9', maxWidth: '640px' }}
             >
               {room.kind === "VIDEO" ? (
                 <MediaVideo
@@ -674,7 +676,10 @@ export function MediaStage({
 
           {/* Empty placeholder tiles when alone */}
           {remoteEntries.length === 0 && (
-            <div className="rounded-xl border border-dashed border-zinc-700 bg-zinc-800/50 flex items-center justify-center aspect-video w-full max-w-xl mx-auto">
+            <div
+              className="rounded-xl border border-dashed border-zinc-700 bg-zinc-800/50 flex items-center justify-center w-full mx-auto"
+              style={{ aspectRatio: '16/9', maxWidth: '640px' }}
+            >
               <div className="text-center px-3">
                 <div className="mx-auto size-10 sm:size-12 rounded-full bg-zinc-700/50 flex items-center justify-center mb-1.5">
                   <UsersIcon className="size-4 sm:size-5 text-zinc-500" />
