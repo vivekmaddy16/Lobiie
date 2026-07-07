@@ -572,7 +572,14 @@ export function MediaStage({
       <div className="flex-1 p-2 sm:p-3 pb-14 overflow-y-auto custom-scrollbar">
         <div className={cn("grid gap-2 sm:gap-2.5 h-full", gridClass)}>
           {/* Local tile */}
-          <div className="relative rounded-xl bg-zinc-800 overflow-hidden flex flex-col">
+          <div
+            className={cn(
+              "relative rounded-xl bg-zinc-800 overflow-hidden flex flex-col transition-all duration-300 border-2",
+              localMedia.audioEnabled
+                ? "border-yellow-400 shadow-md shadow-yellow-400/10"
+                : "border-transparent"
+            )}
+          >
             {room.kind === "VIDEO" && localStream ? (
               <MediaVideo
                 muted
@@ -580,57 +587,87 @@ export function MediaStage({
                 className="w-full h-full min-h-[100px] sm:min-h-[120px] object-cover"
               />
             ) : (
-              <div className="flex-1 flex items-center justify-center min-h-[100px] sm:min-h-[120px] bg-zinc-800">
+              <div className="flex-grow flex items-center justify-center min-h-[100px] sm:min-h-[120px] bg-zinc-800">
                 <div className="text-center">
-                  <div className="mx-auto size-10 sm:size-12 rounded-full bg-zinc-600 flex items-center justify-center">
-                    <span className="text-sm sm:text-base font-semibold text-zinc-300">
+                  <div className="mx-auto size-12 sm:size-14 rounded-full bg-zinc-700 flex items-center justify-center shadow-inner">
+                    <span className="text-sm sm:text-base font-semibold text-zinc-200">
                       {getInitials(viewer.name)}
                     </span>
                   </div>
                 </div>
               </div>
             )}
-            {/* Name + mic overlay */}
-            <div className="absolute bottom-0 left-0 right-0 px-2 py-1.5 bg-gradient-to-t from-black/70 to-transparent flex items-center justify-between">
-              <span className="text-[10px] sm:text-[11px] font-medium text-white truncate">You</span>
-              <span className="text-zinc-400">
-                {localMedia.audioEnabled ? <MicIcon className="size-3" /> : <MicOffIcon className="size-3 text-rose-500" />}
+            {/* Meet style name pill bottom-left */}
+            <div className="absolute bottom-2 left-2 z-10">
+              <span className="px-2 py-0.5 rounded-md bg-white text-zinc-950 text-[10px] sm:text-[11px] font-semibold shadow-md">
+                You
               </span>
+            </div>
+            {/* Meet style mic icon bottom-right */}
+            <div className="absolute bottom-2 right-2 z-10">
+              <div className={cn(
+                "p-1 rounded-full flex items-center justify-center shadow-md size-5 sm:size-6",
+                localMedia.audioEnabled ? "bg-zinc-900/80 text-white" : "bg-rose-600/90 text-white"
+              )}>
+                {localMedia.audioEnabled ? (
+                  <MicIcon className="size-3" />
+                ) : (
+                  <MicOffIcon className="size-3" />
+                )}
+              </div>
             </div>
           </div>
 
           {/* Remote tiles */}
           {remoteEntries.map(({ participant, stream }) => (
-            <div key={participant.socketId} className="relative rounded-xl bg-zinc-800 overflow-hidden flex flex-col">
+            <div
+              key={participant.socketId}
+              className={cn(
+                "relative rounded-xl bg-zinc-800 overflow-hidden flex flex-col transition-all duration-300 border-2",
+                participant.audioEnabled
+                  ? "border-yellow-400 shadow-md shadow-yellow-400/10"
+                  : "border-transparent"
+              )}
+            >
               {room.kind === "VIDEO" ? (
                 <MediaVideo
                   stream={stream}
                   className="w-full h-full min-h-[100px] sm:min-h-[120px] object-cover"
                 />
               ) : (
-                <div className="flex-1 flex items-center justify-center min-h-[100px] sm:min-h-[120px] bg-zinc-800">
+                <div className="flex-grow flex items-center justify-center min-h-[100px] sm:min-h-[120px] bg-zinc-800">
                   <div className="text-center">
-                    <div className="mx-auto size-10 sm:size-12 rounded-full bg-zinc-600 flex items-center justify-center">
-                      <span className="text-sm sm:text-base font-semibold text-zinc-300">
+                    <div className="mx-auto size-12 sm:size-14 rounded-full bg-zinc-700 flex items-center justify-center shadow-inner">
+                      <span className="text-sm sm:text-base font-semibold text-zinc-200">
                         {getInitials(participant.name)}
                       </span>
                     </div>
                   </div>
                 </div>
               )}
-              {/* Name + mic overlay */}
-              <div className="absolute bottom-0 left-0 right-0 px-2 py-1.5 bg-gradient-to-t from-black/70 to-transparent flex items-center justify-between">
-                <span className="text-[10px] sm:text-[11px] font-medium text-white truncate">{participant.name}</span>
-                <div className="flex items-center gap-1">
+              {/* Meet style name pill bottom-left */}
+              <div className="absolute bottom-2 left-2 z-10">
+                <span className="px-2 py-0.5 rounded-md bg-white text-zinc-950 text-[10px] sm:text-[11px] font-semibold shadow-md">
+                  {participant.name}
+                </span>
+              </div>
+              {/* Meet style status icons bottom-right */}
+              <div className="absolute bottom-2 right-2 z-10 flex items-center gap-1">
+                <div className={cn(
+                  "p-1 rounded-full flex items-center justify-center shadow-md size-5 sm:size-6",
+                  participant.audioEnabled ? "bg-zinc-900/80 text-white" : "bg-rose-600/90 text-white"
+                )}>
                   {participant.audioEnabled ? (
-                    <MicIcon className="size-3 text-zinc-400" />
+                    <MicIcon className="size-3" />
                   ) : (
-                    <MicOffIcon className="size-3 text-rose-500" />
-                  )}
-                  {room.kind === "VIDEO" && !participant.videoEnabled && (
-                    <VideoOffIcon className="size-3 text-rose-500" />
+                    <MicOffIcon className="size-3" />
                   )}
                 </div>
+                {room.kind === "VIDEO" && !participant.videoEnabled && (
+                  <div className="p-1 rounded-full flex items-center justify-center bg-rose-600/90 text-white shadow-md size-5 sm:size-6">
+                    <VideoOffIcon className="size-3" />
+                  </div>
+                )}
               </div>
             </div>
           ))}
