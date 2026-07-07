@@ -463,7 +463,7 @@ export function WorkspaceShell({
 
   return (
     <div className="min-h-screen bg-[#F3F4F6] dark:bg-zinc-950 p-4 md:p-6 lg:p-8 flex items-center justify-center">
-      <div className="w-full max-w-7xl h-[calc(100vh-4rem)] min-h-[600px] flex gap-4 overflow-hidden">
+      <div className="w-full max-w-7xl h-[calc(100vh-4rem)] min-h-0 flex gap-4 overflow-hidden">
         {/* ── Left Sidebar (Unified Navigation Pane) ── */}
         <aside className={cn(
           "w-full lg:w-[350px] xl:w-[380px] shrink-0 h-full flex flex-col bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.03)] overflow-hidden",
@@ -804,7 +804,7 @@ export function WorkspaceShell({
 
         {/* ── Right Column (Unified Chat Client + Media Stage) ── */}
         <main className={cn(
-          "flex-grow h-full flex flex-col bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.03)] overflow-hidden",
+          "flex-grow min-w-0 h-full flex flex-col bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.03)] overflow-hidden",
           !showSidebarMobile ? "flex" : "hidden lg:flex"
         )}>
           {activeRoom ? (
@@ -852,9 +852,9 @@ export function WorkspaceShell({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1">
-                    {/* Call toggles */}
+                <div className="flex items-center gap-1.5 sm:gap-3">
+                  {/* Call toggles — hidden on very small screens, visible on md+ */}
+                  <div className="hidden md:flex items-center gap-1">
                     <button
                       type="button"
                       onClick={() => handleStartCall("VOICE")}
@@ -873,64 +873,86 @@ export function WorkspaceShell({
                     >
                       <VideoIcon className="size-5" />
                     </button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        className="p-2.5 rounded-full text-zinc-400 hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer"
-                        title="Options"
-                      >
-                        <MoreVerticalIcon className="size-5" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-lg p-1">
-                        <DropdownMenuItem
-                          onClick={() => {
-                            toast.info(
-                              <div className="space-y-1">
-                                <p className="font-semibold text-sm">Room Info</p>
-                                <p className="text-xs">Name: #{activeRoom.name}</p>
-                                <p className="text-xs">Type: {activeRoom.kind}</p>
-                                {activeRoom.topic && <p className="text-xs">Topic: {activeRoom.topic}</p>}
-                              </div>
-                            )
-                          }}
-                          className="flex items-center gap-2 px-2.5 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg cursor-pointer"
-                        >
-                          <InfoIcon className="size-4 text-muted-foreground" />
-                          <span>Room Info</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={handleCopyInvite}
-                          disabled={isGeneratingInvite}
-                          className="flex items-center gap-2 px-2.5 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg cursor-pointer"
-                        >
-                          {isGeneratingInvite ? (
-                            <LoaderCircleIcon className="size-4 animate-spin" />
-                          ) : (
-                            <LinkIcon className="size-4 text-muted-foreground" />
-                          )}
-                          <span>Copy Invite Link</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator className="my-1 border-t border-zinc-100 dark:border-zinc-800" />
-                        <DropdownMenuItem
-                          onClick={() => {
-                            toast.success("Notification settings updated (Muted).")
-                          }}
-                          className="flex items-center gap-2 px-2.5 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg cursor-pointer"
-                        >
-                          <BellOffIcon className="size-4 text-muted-foreground" />
-                          <span>Mute Notifications</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
                   </div>
 
-                  <div className="h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-1" />
+                  {/* Unified options menu — always visible, includes call actions on mobile */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      className="p-2.5 rounded-full text-zinc-400 hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer"
+                      title="Options"
+                    >
+                      <MoreVerticalIcon className="size-5" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-lg p-1">
+                      {/* Call actions shown inside menu on mobile */}
+                      <DropdownMenuItem
+                        onClick={() => handleStartCall("VOICE")}
+                        disabled={creatingCallRoom}
+                        className="flex md:hidden items-center gap-2 px-2.5 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg cursor-pointer"
+                      >
+                        <PhoneIcon className="size-4 text-muted-foreground" />
+                        <span>Voice Call</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleStartCall("VIDEO")}
+                        disabled={creatingCallRoom}
+                        className="flex md:hidden items-center gap-2 px-2.5 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg cursor-pointer"
+                      >
+                        <VideoIcon className="size-4 text-muted-foreground" />
+                        <span>Video Call</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator className="my-1 border-t border-zinc-100 dark:border-zinc-800 md:hidden" />
+                      <DropdownMenuItem
+                        onClick={() => {
+                          toast.info(
+                            <div className="space-y-1">
+                              <p className="font-semibold text-sm">Room Info</p>
+                              <p className="text-xs">Name: #{activeRoom.name}</p>
+                              <p className="text-xs">Type: {activeRoom.kind}</p>
+                              {activeRoom.topic && <p className="text-xs">Topic: {activeRoom.topic}</p>}
+                            </div>
+                          )
+                        }}
+                        className="flex items-center gap-2 px-2.5 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg cursor-pointer"
+                      >
+                        <InfoIcon className="size-4 text-muted-foreground" />
+                        <span>Room Info</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={handleCopyInvite}
+                        disabled={isGeneratingInvite}
+                        className="flex items-center gap-2 px-2.5 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg cursor-pointer"
+                      >
+                        {isGeneratingInvite ? (
+                          <LoaderCircleIcon className="size-4 animate-spin" />
+                        ) : (
+                          <LinkIcon className="size-4 text-muted-foreground" />
+                        )}
+                        <span>Copy Invite Link</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator className="my-1 border-t border-zinc-100 dark:border-zinc-800" />
+                      <DropdownMenuItem
+                        onClick={() => {
+                          toast.success("Notification settings updated (Muted).")
+                        }}
+                        className="flex items-center gap-2 px-2.5 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg cursor-pointer"
+                      >
+                        <BellOffIcon className="size-4 text-muted-foreground" />
+                        <span>Mute Notifications</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
 
-                  <div className="flex items-center gap-3 shrink-0">
+                  <div className="hidden sm:block h-6 w-px bg-zinc-200 dark:bg-zinc-800 mx-1" />
+
+                  <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
                     <ThemeToggle />
-                    <Badge variant={connected ? "default" : "outline"} className="text-xs py-0.5 rounded-full shrink-0">
+                    <Badge variant={connected ? "default" : "outline"} className="hidden sm:inline-flex text-xs py-0.5 rounded-full shrink-0">
                       <WifiIcon className="size-3 mr-1.5" />
                       {connected ? "Connected" : "Syncing"}
                     </Badge>
+                    {/* Compact connection dot on very small screens */}
+                    <span className={cn("sm:hidden size-2.5 rounded-full shrink-0", connected ? "bg-emerald-500" : "bg-amber-500 animate-pulse")} title={connected ? "Connected" : "Syncing"} />
                   </div>
                 </div>
               </header>
@@ -1162,7 +1184,7 @@ export function WorkspaceShell({
 
                 {/* WebRTC Video Call / Huddle Stage Column */}
                 {activeRoom.kind !== "CHAT" && (
-                  <div className="w-full xl:w-[360px] xl:h-full shrink-0 border-b xl:border-b-0 xl:border-l border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/20 p-4 overflow-y-auto custom-scrollbar xl:order-2">
+                  <div className="w-full max-h-[50vh] xl:max-h-none xl:w-[360px] xl:h-full shrink-0 border-b xl:border-b-0 xl:border-l border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/20 p-4 overflow-y-auto custom-scrollbar xl:order-2">
                     <MediaStage
                       key={activeRoom.id}
                       viewer={viewer}

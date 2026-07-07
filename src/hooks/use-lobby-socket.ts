@@ -77,10 +77,11 @@ export function useLobbySocket({
       isTyping: boolean
       userName: string
     }) {
-      if (roomId) {
+      const currentRoomId = useRoomStore.getState().activeRoomId
+      if (currentRoomId) {
         useRoomStore
           .getState()
-          .setTypingUser(roomId, socketId, isTyping, userName)
+          .setTypingUser(currentRoomId, socketId, isTyping, userName)
       }
     }
 
